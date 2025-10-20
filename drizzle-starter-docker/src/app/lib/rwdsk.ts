@@ -1,19 +1,50 @@
 // src/app/lib/rwsdk.ts
-export type RWUser = { id: string; name: string; avatarUrl?: string; status?: "online"|"busy"|"away" };
+export type Status = "online" | "busy" | "away";
+
+export type RWUser = {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  status: Status;
+};
+
 export type RWThread = { id: string; title: string; lastMessage?: string };
 export type RWMessage = { id: string; authorId: string; text: string; createdAt: string };
 
 type Unsub = () => void;
 
+// ----- ALPHA: enkel lokal status-store -----
+const listeners = new Set<() => void>();
+
+function readStatus(): Status {
+  if (typeof window === "undefined") return "busy";
+  const s = localStorage.getItem("status");
+  return (s === "online" || s === "busy" || s === "away") ? s : "busy";
+}
+
+let me: RWUser = { id: "u-anne", name: "Anne", status: readStatus() };
+
+function notify() {
+  for (const cb of listeners) cb();
+}
+
 export const rwsdk = {
   auth: {
-    // TODO: bytt til ekte Redwood SDK-auth
-    useCurrentUser(): RWUser | null {
-      return { id: "u-anne", name: "Anne", status: "busy" };
-    }
+    useCurrentUser(): RWUser {
+      return me;
+    },
+    onChange(cb: () => void): Unsub {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    setStatus(next: Status) {
+      me = { ...me, status: next };
+      if (typeof window !== "undefined") localStorage.setItem("status", next);
+      notify();
+    },
   },
+
   chat: {
-    // TODO: bytt til ekte kall mot Redwood SDK
     async listThreads(): Promise<RWThread[]> {
       return [
         { id: "t-shahd", title: "Shahd", lastMessage: "Send det i kveld?" },

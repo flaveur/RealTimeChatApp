@@ -2,6 +2,7 @@
 
 import { rwsdk } from "@/app/lib/rwdsk";
 import { MessageSquare, Settings, StickyNote, Users } from "lucide-react";
+import UserStatus from "./UserStatus";
 
 export default function Sidebar() {
   const me = rwsdk.auth.useCurrentUser();
@@ -23,15 +24,10 @@ export default function Sidebar() {
         </a>
       </header>
 
-      <section className="px-4 pb-6">
-        <figure className="flex items-center gap-3">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-200" aria-hidden />
-          <figcaption className="text-sm">
-            <p className="font-medium">{me?.name ?? "Bruker"}</p>
-            <p className="text-gray-500">{me?.status === "busy" ? "Opptatt" : "Tilgjengelig"}</p>
-          </figcaption>
-        </figure>
-      </section>
+      <UserStatus 
+        name={me?.name ?? "Bruker"}
+        status={me?.status ?? "online"}
+      />
 
       <nav className="px-2">
         <ul className="space-y-1">

@@ -1,9 +1,9 @@
 import { Document } from "@/app/Document";
+import FriendList from "@/app/pages/FriendList";
 import Login from "@/app/pages/Login";
 import Messages from "@/app/pages/Messages";
-import Register from "@/app/pages/Register";
-import FriendList from "@/app/pages/FriendList";
 import Notes from "@/app/pages/Notes";
+import Register from "@/app/pages/Register";
 import Settings from "@/app/pages/Settings";
 
 import { render, route } from "rwsdk/router";
