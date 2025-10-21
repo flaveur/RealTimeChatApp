@@ -32,11 +32,11 @@ export default function Messages() {
       <main className="mx-auto flex max-w-[1400px] gap-0 p-4">
         <Sidebar />
 
-        <section className="w-80 border-r bg-white">
-          <header className="border-b px-4 py-3">
+        <section className="w-80 border-r border-gray-200 bg-white">
+          <header className="border-b border-gray-200 px-4 py-3">
             <h2 className="text-sm font-medium text-gray-600">Samtaler</h2>
           </header>
-          <ul className="divide-y">
+          <ul className="divide-y divide-gray-200">
             {threads.map(t => (
               <li key={t.id}>
                 <button
@@ -57,7 +57,7 @@ export default function Messages() {
         </section>
 
         <section className="flex min-h-[80vh] flex-1 flex-col bg-white">
-          <header className="border-b px-6 py-4">
+          <header className="border-b border-gray-200 px-6 py-4">
             <h2 className="text-base font-semibold">{activeTitle}</h2>
           </header>
 
@@ -67,7 +67,7 @@ export default function Messages() {
             ))}
           </section>
 
-          <footer className="border-t px-6 py-4">
+          <footer className="border-t border-gray-200 px-6 py-4">
             <MessageInput
               disabled={!activeId}
               onSend={async (text) => {

@@ -16,7 +16,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside aria-label="Hovedmeny" className="w-64 shrink-0 border-r bg-white">
+    <aside aria-label="Hovedmeny" className="w-64 shrink-0 border-r border-gray-200 bg-white">
       <header className="px-4 pt-6 pb-4">
         <a href="/" className="inline-flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-brand-blue" aria-hidden />

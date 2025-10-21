@@ -19,17 +19,17 @@ export default function Settings() {
     applyTheme();
   }, []);
 
+  // ✅ Bruk hooken direkte i stedet for useSyncExternalStore
   // Live-bruker (navn/status) via enkel store + useSyncExternalStore
   // Ref: https://react.dev/reference/react/useSyncExternalStore
-  const me = useSyncExternalStore(
-    rwsdk.auth.onChange,
-    () => rwsdk.auth.useCurrentUser(),
-    () => rwsdk.auth.useCurrentUser()
-  );
+  const me = rwsdk.auth.useCurrentUser?.() ?? null;
 
   // local state for navn (lagres til localStorage via rwsdk.auth.setName)
   // Ref: https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
-  const [name, setName] = useState(me.name);
+  const [name, setName] = useState(me?.name ?? "");
+  useEffect(() => {
+    setName(me?.name ?? "");
+  }, [me?.name]);
 
   // Tema (light/dark/system), med synk mot html.dark
   const theme = useSyncExternalStore(
@@ -193,8 +193,6 @@ export default function Settings() {
           </li>
         </ul>
       </section>
-
-
 
       {/* LOGG UT */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6">
