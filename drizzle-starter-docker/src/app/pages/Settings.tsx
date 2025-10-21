@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import Sidebar from "../../components/Sidebar";
 import { rwsdk } from "../lib/rwdsk";
 import {
   applyTheme,
@@ -45,11 +46,15 @@ export default function Settings() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl p-6 space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold">Innstillinger</h1>
-        <p className="text-gray-600">Tilpass konto, status og utseende</p>
-      </header>
+    <section className="min-h-screen bg-gray-100">
+      <main className="mx-auto flex max-w-[1400px] gap-0 p-4">
+        <Sidebar />
+        
+        <section className="flex-1 bg-white rounded-2xl p-6 space-y-8">
+          <header>
+            <h1 className="text-2xl font-semibold">Innstillinger</h1>
+            <p className="text-gray-600">Tilpass konto, status og utseende</p>
+          </header>
 
       {/* PROFIL (kort/seksjon) – inspirasjon: Tailwind UI Settings */}
       {/* https://tailwindui.com/components/application-ui/forms/settings */}
@@ -211,7 +216,9 @@ export default function Settings() {
         >
           Logg ut
         </button>
-      </section>
-    </main>
+          </section>
+        </section>
+      </main>
+    </section>
   );
 }
