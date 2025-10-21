@@ -1,69 +1,66 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState } from "react";
 
 export default function Friends() {
-  if (typeof window === "undefined") {
-    return <p>Laster venneliste</p>;
-  }
-
-  // Eksisterende venner
-  const friendsList = [
-    { id: 1, name: "Rami", status: "online" },
-    { id: 2, name: "Luka", status: "offline" },
-    { id: 3, name: "Jan", status: "offline" },
-  ];
-
-  // Falsk data for søk
-  const allUsers = [
-    ...friendsList,
-    { id: 3, name: "Bruh", status: "offline" },
-    { id: 4, name: "67", status: "online" },
-    { id: 5, name: "Hei", status: "offline" },
-  ];
-
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = useMemo(() => {
-    if (!searchTerm.trim()) return friendsList;
-    return allUsers.filter((user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm]);
+  const friends = [
+    { name: "Shahd" },
+    { name: "Jan" },
+    { name: "Rami" },
+    { name: "Luka" },
+    { name: "Roger" },
+    { name: "Peter" },
+    { name: "Steven" },
+    { name: "Chris" },
+  ];
+
+  const filteredFriends = friends.filter((friend) =>
+    friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="space-y-4">
-      <input
-        type="text"
-        placeholder="Søk etter venner..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring focus:border-blue-400"
-      />
+    <main className="bg-white rounded-3xl p-8 shadow-md w-full">
+      <form className="mb-6" role="search" aria-label="Søk etter venner">
+        <label htmlFor="search" className="sr-only">
+          Søk etter venner
+        </label>
+        <input
+          id="search"
+          type="search"
+          placeholder="Søk etter venner..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </form>
 
-      <ul className="space-y-3">
-        {filteredUsers.length > 0 ? (
-          filteredUsers.map((friend) => (
-            <li
-              key={friend.id}
-              className="flex items-center justify-between rounded-lg border p-3 bg-gray-50"
-            >
-              <span className="font-medium">{friend.name}</span>
-              <span
-                className={`text-sm ${
-                  friend.status === "online"
-                    ? "text-green-600"
-                    : "text-gray-500"
-                }`}
+      <section aria-label="Venner">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Venner</h2>
+
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredFriends.length > 0 ? (
+            filteredFriends.map((friend) => (
+              <li
+                key={friend.name}
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl shadow hover:shadow-md transition"
               >
-                {friend.status}
-              </span>
-            </li>
-          ))
-        ) : (
-          <p className="text-gray-500 text-sm">Ingen resultater</p>
-        )}
-      </ul>
-    </div>
+                <figure className="w-12 h-12 bg-gray-300 rounded-full flex-shrink-0" />
+                <span className="font-medium text-gray-800">{friend.name}</span>
+              </li>
+            ))
+          ) : (
+            <p className="text-gray-500 col-span-full">
+              Ingen venner funnet.
+            </p>
+          )}
+        </ul>
+
+        <button className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition">
+          + Legg til venner
+        </button>
+      </section>
+    </main>
   );
 }
