@@ -64,7 +64,7 @@ export default function Notes() {
         className="grid grid-cols-[360px_minmax(0,1fr)] gap-14 items-start"
       >
         <section>
-          <h2 className="text-xl font-semibold mb-4">Mine notater</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Mine notater</h2>
 
           {notes.length ? (
             <ul className="grid gap-4">
@@ -74,7 +74,7 @@ export default function Notes() {
                     onClick={() => setSelectedId(n.id)}
                     className={`note-pill ${
                       n.id === selectedId ? "note-pill-active" : ""
-                    }`}
+                    } rounded-xl px-3 py-2 w-full text-left transition border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700`}
                     title={new Date(n.updatedAt).toLocaleString()}
                   >
                     <strong>{n.title || "Uten tittel"}</strong>
@@ -83,7 +83,7 @@ export default function Notes() {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500 text-sm mb-4">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
               Ingen notater ennå.
             </p>
           )}
@@ -107,21 +107,21 @@ export default function Notes() {
           </footer>
         </section>
 
-        <article className="editor-wrap">
+        <article className="editor-wrap bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <section className="panel">
             <header className="mb-3">
               <input
-                className="w-full text-base font-semibold bg-transparent outline-none"
+                className="w-full text-base font-semibold bg-transparent outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 value={selected?.title ?? "Nytt notat"}
                 onChange={(e) => updateSelected({ title: e.target.value })}
                 placeholder="Tittel"
               />
-              <hr className="title-rule" />
+              <hr className="title-rule border-gray-200 dark:border-gray-700" />
             </header>
 
             <section className="panel-inner">
               <textarea
-                className="editor-textarea h-[420px] w-full"
+                className="editor-textarea h-[420px] w-full bg-transparent text-gray-900 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 placeholder="Skriv notat her..."
                 value={selected?.body || ""}
                 onChange={(e) => updateSelected({ body: e.target.value })}
@@ -130,7 +130,7 @@ export default function Notes() {
 
             {selected && (
               <footer className="mt-4 flex justify-between items-center">
-                <span className="text-xs text-neutral-500">
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
                   Sist endret:{" "}
                   {new Date(selected.updatedAt).toLocaleString()}
                 </span>
