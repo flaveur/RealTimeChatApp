@@ -28,7 +28,7 @@ export default function UserStatus({ name, status = "online", avatarUrl }: Props
         ) : (
           <span
             aria-hidden="true"
-            className="block h-12 w-12 rounded-full bg-gray-200"
+            className="block h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"
           />
         )}
 
@@ -47,9 +47,9 @@ export default function UserStatus({ name, status = "online", avatarUrl }: Props
 
       <article className="text-sm leading-tight">
         <header>
-          <h2 className="font-medium">{name}</h2>
+          <h2 className="font-medium text-gray-900 dark:text-white">{name}</h2>
         </header>
-        <p className="text-gray-500 capitalize">{status}</p>
+        <p className="text-gray-500 dark:text-gray-400 capitalize">{status}</p>
       </article>
     </section>
   );

@@ -22,10 +22,10 @@ export default function UserStatusEditable() {
   return (
     <section aria-label={`${me.name} sin status`} className="px-4 pb-6">
       <header className="flex items-center gap-3">
-        <span aria-hidden className="inline-block h-12 w-12 rounded-full bg-gray-200" />
+        <span aria-hidden className="inline-block h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
         <section className="text-sm leading-tight">
-          <h2 className="font-medium">{me.name}</h2>
-          <p className="text-gray-500 inline-flex items-center gap-2">
+          <h2 className="font-medium text-gray-900 dark:text-white">{me.name}</h2>
+          <p className="text-gray-500 dark:text-gray-400 inline-flex items-center gap-2">
             <span className={`inline-block h-2.5 w-2.5 rounded-full ${dot[me.status]}`} aria-hidden />
             <span className="capitalize">{labels[me.status]}</span>
           </p>
@@ -33,7 +33,7 @@ export default function UserStatusEditable() {
 
         <button
           type="button"
-          className="ml-auto rounded-lg border border-gray-300 px-3 py-1 text-xs hover:bg-gray-50"
+          className="ml-auto rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200"
           onClick={() => setOpen(v => !v)}
           aria-expanded={open}
           aria-controls="status-panel"
@@ -43,11 +43,11 @@ export default function UserStatusEditable() {
       </header>
 
       {open && (
-        <form id="status-panel" className="mt-3 rounded-xl border border-gray-200 bg-white p-3">
+        <form id="status-panel" className="mt-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
           <fieldset className="space-y-2">
             <legend className="sr-only">Velg status</legend>
             {(["online","busy","away"] as Status[]).map(s => (
-              <label key={s} className="flex items-center gap-2 text-sm">
+              <label key={s} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="radio"
                   name="status"

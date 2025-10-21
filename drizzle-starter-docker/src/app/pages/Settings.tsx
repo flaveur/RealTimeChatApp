@@ -131,7 +131,7 @@ export default function Settings() {
             <legend className="sr-only">Tema</legend>
 
             {(["light", "dark", "system"] as Theme[]).map((t) => (
-              <label key={t} className="flex items-center gap-2 text-sm">
+              <label key={t} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="radio"
                   name="theme"
