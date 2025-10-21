@@ -26,7 +26,7 @@ export default function Sidebar() {
     <aside aria-label="Hovedmeny" className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
       <header className="px-4 pt-6 pb-4">
         <a href="/" className="inline-flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-brand-blue" aria-hidden />
+          <MessageSquare className="h-5 w-5 text-brand-blue dark:text-blue-400" aria-hidden />
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Real-Time Chat</h1>
         </a>
       </header>
