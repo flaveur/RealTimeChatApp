@@ -3,7 +3,7 @@ import Login from "@/app/pages/Login";
 import Messages from "@/app/pages/Messages";
 import Register from "@/app/pages/Register";
 import FriendList from "@/app/pages/FriendList";
-import Notes from "@/app/pages/Notes";
+import Notes from "@/app/pages/NotesPage";
 import Settings from "@/app/pages/Settings";
 
 import { render, route } from "rwsdk/router";
@@ -56,8 +56,8 @@ export default defineApp([
   render(Document, [
     route("/", Messages),
     route("/messages", Messages),
-    route("/friends", FriendList),
-    route("/notes", Notes),
+    route("/friendlist", FriendList),
+    route("/notespage", Notes),
     route("/settings", Settings),
     route("/login", Login),
     route("/register", Register),

@@ -9,8 +9,8 @@ export default function Sidebar() {
   
   const items = [
     { label: "Meldinger", icon: MessageSquare, href: "/messages" },
-    { label: "Venneliste", icon: Users, href: "/friends" },
-    { label: "Mine notater", icon: StickyNote, href: "/notes" },
+    { label: "Venneliste", icon: Users, href: "/friendlist" },
+    { label: "Mine notater", icon: StickyNote, href: "/notespage" },
     { label: "Innstillinger", icon: Settings, href: "/settings" }
   ];
 

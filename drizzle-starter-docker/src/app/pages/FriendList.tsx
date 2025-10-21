@@ -1,4 +1,5 @@
 import Sidebar from "../../components/Sidebar";
+import Friends from "../../components/Friends"; 
 
 export default function FriendListPage() {
   return (
@@ -6,10 +7,11 @@ export default function FriendListPage() {
       <main className="mx-auto flex max-w-[1400px] gap-0 p-4">
         <Sidebar />
         
-        <section className="flex flex-1 items-center justify-center bg-white">
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold text-gray-800">Venneliste</h1>
-            <p className="mt-2 text-gray-500">Placeholder</p>
+        <section className="flex flex-1 bg-white p-6">
+          <div className="w-full">
+            <h1 className="text-2xl font-semibold text-gray-800 mb-6">Venneliste</h1>
+            <Friends /> 
+            
           </div>
         </section>
       </main>
