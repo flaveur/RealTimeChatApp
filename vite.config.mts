@@ -1,10 +1,10 @@
-import { defineConfig } from "vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
-import { redwood } from "rwsdk/vite";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
+import { dirname, resolve } from "node:path";
+import { redwood } from "rwsdk/vite";
+import { fileURLToPath } from "url";
+import { defineConfig } from "vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,10 +33,9 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
-    strictPort: true,
-    hmr: {
-      port: 5173,
-    },
+    strictPort: false,
+    // Let Vite choose HMR port dynamically alongside chosen server port
+    hmr: {},
     watch: {
       usePolling: true,
       interval: 1000,

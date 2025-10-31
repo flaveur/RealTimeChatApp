@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Sidebar from "../../components/Sidebar";
-import { rwsdk } from "../lib/rwdsk";
+import { rwsdk } from "../lib/rwsdk";
 import {
   applyTheme,
   getTheme,

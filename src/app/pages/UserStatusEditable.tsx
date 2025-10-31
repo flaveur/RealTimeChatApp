@@ -1,5 +1,5 @@
 // src/components/UserStatusEditable.tsx
-import { rwsdk, type Status } from "@/app/lib/rwdsk";
+import { rwsdk, type Status } from "@/app/lib/rwsdk";
 import { useState, useSyncExternalStore } from "react";
 
 const labels: Record<Status, string> = { online: "Online", busy: "Opptatt", away: "Borte" };

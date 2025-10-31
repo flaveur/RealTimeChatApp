@@ -1,6 +1,6 @@
 'use client';
 
-import { rwsdk } from "@/app/lib/rwdsk";
+import { rwsdk } from "@/app/lib/rwsdk";
 import { applyTheme } from "@/app/lib/theme";
 import { MessageSquare, Settings, StickyNote, Users } from "lucide-react";
 import { useEffect } from "react";

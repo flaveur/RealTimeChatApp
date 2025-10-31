@@ -1,6 +1,6 @@
 'use client';
 
-import { rwsdk, type RWMessage, type RWThread } from "@/app/lib/rwdsk";
+import { rwsdk, type RWMessage, type RWThread } from "@/app/lib/rwsdk";
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 
