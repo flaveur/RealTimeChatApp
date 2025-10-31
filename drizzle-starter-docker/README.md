@@ -26,25 +26,42 @@ docker compose down
 
 Hvis denne feiler så kan det hende du først må slette node_modules og lock filen. Deretter installere og prøve å starte serveren med uten docker. Dette for å få laget ".wrangler" mappen.
 
-Med pnpm:
+````markdown
+# Info
 
-```bash
+Docker-oppsettet er fjernet fra dette repositoryet for å forenkle lokal utvikling på Windows. Hvis du likevel trenger Docker-filer senere, er de sikkerhetskopiert i repo-roten under `docker-backup/`.
+
+Bruk heller lokal utviklingsflyt med pnpm (anbefalt) eller npm.
+
+Rask start (pnpm):
+
+```powershell
 pnpm install
-pnpm run dev
+pnpm dev
 ```
 
-Med npm:
+Rask start (npm):
 
-```bash
+```powershell
 npm install
 npm run dev
 ```
 
-Deretter prøver å starte med docker igjen.
+Hvis du får problemer med native avhengigheter (f.eks. better-sqlite3), kjør:
 
-```bash
-docker compose up --build
+```powershell
+pnpm approve-builds
+pnpm install
 ```
 
-I fremtiden kan du bare bruke `docker compose up` for å starte serveren igjen
+Backup av tidligere Docker-filer:
+
+ - `docker-backup/Dockerfile`
+ - `docker-backup/docker-compose.yml`
+ - `docker-backup/.dockerignore`
+ - `docker-backup/README.md.docker-backup`
+
+Hvis du ønsker at jeg fjerner alle Docker-artefakter permanent eller rydder flere docker-relaterte referanser i andre filer (for eksempel `vite.config.mts`), si ifra så ordner jeg det.
+
+````
 
