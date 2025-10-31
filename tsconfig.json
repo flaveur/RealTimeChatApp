@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    /* ---------------------------
+      Module & language setup
+    ----------------------------*/
+    "target": "es2021",
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "ES2022"],
+    "jsx": "react-jsx",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+
+    /* ---------------------------
+       Path aliases (fixes @/)
+    ----------------------------*/
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@generated/*": ["./generated/*"]
+    },
+
+    /* ---------------------------
+       Misc settings
+    ----------------------------*/
+  "types": ["@cloudflare/workers-types"],
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+
+  /* ---------------------------
+     Extra type declarations
+  ----------------------------*/
+  "include": [
+    "src",
+    "types"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
