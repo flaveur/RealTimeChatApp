@@ -4,26 +4,39 @@ import { useState } from "react";
 
 export default function Login() {
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const username = (formData.get("username") as string)?.trim();
+    const password = (formData.get("password") as string)?.trim();
 
-    // TODO: Implementer faktisk autentisering i neste oblig
-    // For nå: bare sett en mock auth cookie og naviger
-    if (email && password) {
-      // Setter en enkel auth cookie for nå
-      document.cookie = `authToken=mock-token-${Date.now()}; path=/; max-age=86400`;
-      document.cookie = `userEmail=${email}; path=/; max-age=86400`;
-      
-      // Naviger til messages
-      window.location.href = "/messages";
-    } else {
+    if (!username || !password) {
       setError("Vennligst fyll ut alle felt");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || "Kunne ikke logge inn");
+      }
+      // Cookie settes av server. Naviger til forsiden
+      window.location.href = "/";
+    } catch (err: any) {
+      setError(err.message || "Noe gikk galt");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -43,11 +56,11 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <section>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">E-post</label>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">Brukernavn</label>
             <input
-              id="email"
-              name="email"
-              type="email"
+              id="username"
+              name="username"
+              autoComplete="username"
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
@@ -58,15 +71,17 @@ export default function Login() {
               id="password"
               name="password"
               type="password"
+              autoComplete="current-password"
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </section>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition disabled:opacity-60"
           >
-            Logg inn
+            {loading ? 'Logger inn…' : 'Logg inn'}
           </button>
         </form>
 

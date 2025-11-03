@@ -203,12 +203,12 @@ export default function Settings() {
 
         <button
           type="button"
-          onClick={() => {
-            // Fjern auth cookies
-            document.cookie = "authToken=; path=/; max-age=0";
-            document.cookie = "userEmail=; path=/; max-age=0";
-            // Naviger til login
-            window.location.href = "/login";
+          onClick={async () => {
+            try {
+              await fetch("/api/logout", { method: "POST" });
+            } finally {
+              window.location.href = "/login";
+            }
           }}
           className="rounded-xl border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
         >
