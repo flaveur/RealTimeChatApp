@@ -12,9 +12,9 @@ import { z } from "zod";
 import { setCommonHeaders } from "./app/headers";
 
 // Drizzle import
-import { createDB } from "./db/client";
-import { messages, users, sessions } from "./db/schema";
 import { eq } from "drizzle-orm";
+import { createDB } from "./db/client";
+import { messages, sessions, users } from "./db/schema";
 
 // Typene
 export interface Env {
@@ -92,6 +92,9 @@ function loadUserMiddleware() {
     const token = getCookie(cookieHeader, "authToken");
     ctx.user = undefined;
 
+    const url = new URL(request.url);
+    const isApi = url.pathname.startsWith("/api");
+
     if (!token) return;
     try {
       const db = createDB(env);
@@ -100,14 +103,29 @@ function loadUserMiddleware() {
         .from(sessions)
         .where(eq(sessions.token, token))
         .limit(1);
-      if (!sess) return;
+
+      if (!sess) {
+        const headers = new Headers();
+        headers.set("Set-Cookie", deleteCookie("authToken", { path: "/" }));
+        if (isApi) return new Response("Unauthorized", { status: 401, headers });
+        headers.set("Location", "/login");
+        return new Response(null, { status: 302, headers });
+      }
+
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, (sess as any).userId))
         .limit(1);
+
       if (user) {
         ctx.user = { id: (user as any).id, username: (user as any).username };
+      } else {
+        const headers = new Headers();
+        headers.set("Set-Cookie", deleteCookie("authToken", { path: "/" }));
+        if (isApi) return new Response("Unauthorized", { status: 401, headers });
+        headers.set("Location", "/login");
+        return new Response(null, { status: 302, headers });
       }
     } catch (e) {
       // swallow and keep unauthenticated
