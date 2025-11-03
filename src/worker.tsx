@@ -11,7 +11,7 @@ import { defineApp } from "rwsdk/worker";
 import { z } from "zod";
 import { setCommonHeaders } from "./app/headers";
 
-// 🧩 Drizzle import
+// Drizzle import
 import { createDB } from "./db/client";
 import { messages, users } from "./db/schema";
 
@@ -51,7 +51,7 @@ async function apiHandler(request: Request, env: Env) {
 
   // GET /api/users,  hent brukere
   if (url.pathname === "/api/users" && request.method === "GET") {
-    const allUsers = await db.select().from(users).all();
+    const allUsers = await db.select().from(users);
     return Response.json(allUsers);
   }
 
@@ -63,7 +63,14 @@ async function apiHandler(request: Request, env: Env) {
       content: z.string().min(1),
     });
 
-    const parsed = MessageInput.safeParse(await request.json());
+    let body: unknown = null;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json({ error: "Body must be valid JSON" }, { status: 400 });
+    }
+
+    const parsed = MessageInput.safeParse(body);
     if (!parsed.success) {
       return Response.json(
         { error: "Invalid request body", details: parsed.error.flatten() },
