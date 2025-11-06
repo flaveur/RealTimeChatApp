@@ -1,8 +1,26 @@
 name = "real-time-chat-app"
-main = "src/index.ts"
+main = "src/worker.tsx"
 compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
 
+# D1 database (Drizzle)
 [[d1_databases]]
 binding = "DB"
 database_name = "chatapp_db"
 database_id = "933cc601-b52d-4886-be7d-27e49d68eb6a"
+migrations_dir = "drizzle"   
+
+# Statisk mappe for assets (kan være bilder, CSS osv.)
+[site]
+bucket = "./dist"           
+directory = "public"
+
+# Miljøvariabler (leses fra .env)
+[vars]
+NODE_ENV = "development"
+
+# Lokal utvikling med Miniflare
+[dev]
+ip = "0.0.0.0"
+port = 8787
+local_protocol = "http"

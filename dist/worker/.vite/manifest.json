@@ -1,8 +1,8 @@
 {
-  "dist/worker/index.js": {
+  "virtual:cloudflare/worker-entry": {
     "file": "index.js",
     "name": "index",
-    "src": "dist/worker/index.js",
+    "src": "virtual:cloudflare/worker-entry",
     "isEntry": true
   }
 }

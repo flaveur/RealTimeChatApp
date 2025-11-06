@@ -1,21 +1,34 @@
-import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-// Brukere
+// Brukere-tabellen
 export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  status: text("status").default("online"),
-  note: text("note"),
+  status: text("status").default("offline"),
 });
 
-// Meldinger
+// Meldingstabellen
 export const messages = sqliteTable("messages", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  sender_id: integer("sender_id").notNull(),
-  receiver_id: integer("receiver_id").notNull(),
+  id: text("id").primaryKey(), // ✅ fjernet default(sql...)
+  senderId: text("sender_id").notNull(),
+  receiverId: text("receiver_id").notNull(),
   content: text("content").notNull(),
-  // Use SQLite expression for milliseconds since epoch at insert time
-  timestamp: integer("timestamp", { mode: "timestamp_ms" }).default(sql`(unixepoch('now') * 1000)`),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+});
+
+// Session-tabellen
+export const sessions = sqliteTable("sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  token: text("token").notNull().unique(),
+});
+
+
+// Vennskapstabell (kobler to brukere sammen)
+export const friends = sqliteTable("friends", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  friendId: text("friend_id").notNull(),
 });
