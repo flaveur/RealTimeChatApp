@@ -46,19 +46,13 @@ export const rwsdk = {
 
   chat: {
     async listThreads(): Promise<RWThread[]> {
-      return [
-        { id: "t-shahd", title: "Shahd", lastMessage: "Send det i kveld?" },
-        { id: "t-jan",   title: "Jan",   lastMessage: "👍" },
-        { id: "t-rami",  title: "Rami",  lastMessage: "Klar for demo" },
-        { id: "t-luka",  title: "Luka",  lastMessage: "Ikke glem å levere arbeidskrav :)" }
-      ];
+      // Ingen mock-tråder som standard — returner en tom liste slik at UI kan hente reelle data
+      return [];
     },
     subscribe(threadId: string, cb: (msgs: RWMessage[]) => void): Unsub {
-      const seed: RWMessage[] = [
-        { id: "m1", authorId: "t-luka", text: "Ikke glem å levere arbeidskrav :)", createdAt: "2025-10-20T10:15:00Z" },
-        { id: "m2", authorId: "u-anne", text: "Takk! :)", createdAt: "2025-10-20T10:16:00Z" }
-      ];
-      cb(seed);
+      // Ingen forhåndsseedede meldinger — kaller tilbake med en tom tabell. Reell
+      // implementasjon bør abonnere på backend eller realtime-tjeneste.
+      cb([]);
       return () => {};
     },
     async send(threadId: string, text: string): Promise<void> {

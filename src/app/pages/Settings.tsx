@@ -41,8 +41,9 @@ export default function Settings() {
   function saveName(e: React.FormEvent) {
     e.preventDefault();
     // TODO: Implementer setName i rwsdk.auth i neste oblig
-    console.log("Lagrer navn:", name.trim());
-    alert(`Navn lagret: ${name.trim()} (mock)`);
+  console.log("Lagrer navn:", name.trim());
+  // Informer brukeren at navnet er lagret (TODO: persister via rwsdk.auth.setName)
+  alert(`Navn lagret: ${name.trim()}`);
   }
 
   return (

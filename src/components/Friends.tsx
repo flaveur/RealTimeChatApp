@@ -10,10 +10,6 @@ export default function Friends() {
     { name: "Jan" },
     { name: "Rami" },
     { name: "Luka" },
-    { name: "Roger" },
-    { name: "Peter" },
-    { name: "Steven" },
-    { name: "Chris" },
   ];
 
   const filteredFriends = friends.filter((friend) =>

@@ -7,16 +7,16 @@ export default defineScript(async ({ env }) => {
     const db = drizzle(env.DB);
     await db.delete(users);
 
-    // Insert a user
+    // Sett inn en testbruker
     await db.insert(users).values({
       name: "Test user",
       email: "test@testuser.io",
     });
 
-    // Verify the insert by selecting all users
+    // Verifiser innsatt bruker ved å velge alle brukere
     const result = await db.select().from(users).all();
 
-    console.log("🌱 Finished seeding");
+    console.log("🌱 Ferdig med seeding");
 
     return Response.json(result);
   } catch (error) {

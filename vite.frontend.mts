@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
-  root: ".",
+  root: ".", // bruker index.html i rotmappa
   build: {
     outDir: "dist-frontend",
   },

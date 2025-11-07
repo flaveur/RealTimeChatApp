@@ -2,65 +2,22 @@
   "name": "real-time-chat-app",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite dev",
-    "dev:init": "rw-scripts dev-init",
-    "preview": "vite preview",
-    "worker:run": "rw-scripts worker-run",
-    "clean": "npm run clean:vite",
-    "clean:vite": "rm -rf ./node_modules/.vite",
-    "release": "npm run clean && npm run build && wrangler deploy",
+    "dev:frontend": "vite --config vite.frontend.mts --port 5180",
+    "build:frontend": "vite build --config vite.frontend.mts",
+    "dev:worker": "wrangler dev",
+    "build:worker": "vite build --config vite.config.mts",
+    "release": "npm run clean && npm run build:worker && wrangler deploy",
     "migrate:new": "drizzle-kit generate",
     "migrate:dev": "wrangler d1 migrations apply DB --local",
     "migrate:prod": "wrangler d1 migrations apply DB --remote",
-    "seed": "npm run worker:run ./src/db/seed.ts"
-  },
-  "dependencies": {
-    "better-sqlite3": "^12.4.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.7",
-    "lucide-react": "^0.552.0",
-    "nanoid": "^5.1.6",
-    "ofetch": "^1.5.1",
-    "ohash": "^2.0.11",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "react-server-dom-webpack": "19.2.0",
-    "rwsdk": "1.0.0-beta.24-test.20251103154619",
-    "tailwind-merge": "^3.3.1",
-    "ufo": "^1.6.1",
-    "zod": "^4.1.12"
-  },
-  "devDependencies": {
-    "@cloudflare/vite-plugin": "1.13.19",
-    "@cloudflare/workers-types": "^4.20251014.0",
-    "@types/node": "^24.10.0",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.1.0",
-    "autoprefixer": "^10.4.21",
-    "babel-plugin-react-compiler": "1.0.0",
-    "drizzle-kit": "^0.31.6",
-    "postcss": "^8.5.6",
-    "tailwindcss": "3.4.14",
-    "tsx": "^4.20.6",
-    "tw-animate-css": "^1.4.0",
-    "typescript": "^5.9.3",
-    "vite": "^7.2.0",
-    "wrangler": "4.45.4"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp",
-      "workerd"
-    ],
-    "ignoredBuiltDependencies": [
-      "better-sqlite3"
-    ]
+    "seed": "npm run worker:run ./src/db/seed.ts",
+    "clean": "npm run clean:vite",
+    "clean:vite": "Remove-Item -Recurse -Force node_modules/.vite -ErrorAction SilentlyContinue",
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "worker:run": "rw-scripts worker-run",
+    "dev:init": "rw-scripts dev-init"
   }
 }
