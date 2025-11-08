@@ -3,13 +3,21 @@
 import { rwsdk } from "@/app/lib/rwsdk";
 import { applyTheme } from "@/app/lib/theme";
 import { MessageSquare, Settings, StickyNote, Users } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 export default function Sidebar() {
   useEffect(() => applyTheme(), []);
-  const me = rwsdk.auth.useCurrentUser();
   const location = useLocation();
+  const [user, setUser] = useState(() => rwsdk.auth.useCurrentUser());
+
+  // Lytt til endringer i brukerdata (inkludert status)
+  useEffect(() => {
+    const unsub = rwsdk.auth.onChange(() => {
+      setUser(rwsdk.auth.useCurrentUser());
+    });
+    return unsub;
+  }, []);
 
   const items = [
     { label: "Meldinger", icon: MessageSquare, href: "/messages" },
@@ -18,15 +26,73 @@ export default function Sidebar() {
     { label: "Innstillinger", icon: Settings, href: "/settings" },
   ];
 
+  const statusColor: Record<string, string> = {
+    online: "bg-green-500",
+    busy: "bg-red-500",
+    away: "bg-yellow-400",
+    offline: "bg-gray-400",
+  };
+
+  const statusLabel: Record<string, string> = {
+    online: "Tilgjengelig",
+    busy: "Opptatt",
+    away: "Borte",
+    offline: "Frakoblet",
+  };
+
+  function getInitials(name?: string) {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  const userStatus = user?.status ?? "offline";
+
   return (
-    <nav className="flex flex-col gap-4">
-      <header>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Real-Time Chat</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{me?.name ?? "Bruker"}</p>
+    <nav className="flex flex-col gap-6">
+      {/* Profilkort */}
+      <header className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <figure className="relative h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center select-none flex-shrink-0">
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={`${user.name}'s avatar`}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <span className="text-sm font-bold text-white">
+                {getInitials(user?.name)}
+              </span>
+            )}
+            <span
+              title={statusLabel[userStatus]}
+              className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-gray-50 dark:border-gray-800 ${statusColor[userStatus]}`}
+            />
+          </figure>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+              {user?.name ?? "Gjest"}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {statusLabel[userStatus]}
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/settings"
+          className="block w-full text-center text-xs px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+        >
+          Rediger profil
+        </Link>
       </header>
 
-      <ul className="space-y-1">
-        {items.map(({ label, icon: Icon, href }) => {
+      {/* Navigasjon */}
+      <ul className="space-y-1">{items.map(({ label, icon: Icon, href }) => {
           const active = location.pathname === href;
           return (
             <li key={href}>
@@ -34,8 +100,8 @@ export default function Sidebar() {
                 to={href}
                 className={`flex items-center gap-3 px-4 py-2 rounded-lg transition ${
                   active
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    ? "bg-blue-600 text-white dark:bg-blue-600"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
                 <Icon className="w-5 h-5" />

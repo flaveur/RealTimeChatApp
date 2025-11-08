@@ -157,6 +157,36 @@ export default {
       }
     }
 
+    // Oppdater brukerstatus
+    if (url.pathname === "/api/me/status" && request.method === "POST") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
+        const token = match ? match[1] : null;
+        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        // Valider session
+        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
+        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
+        const sess = s[0] as any;
+
+        // Les status fra body
+        const { status } = (await request.json()) as { status: "online" | "busy" | "away" };
+        if (!status || !["online", "busy", "away"].includes(status)) {
+          return Response.json({ error: "Ugyldig status" }, { status: 400 });
+        }
+
+        // Oppdater status i database
+        await db.update(users).set({ status }).where(eq(users.id, sess.userId ?? sess.user_id));
+
+        if (VERBOSE) console.log("Status oppdatert:", sess.userId ?? sess.user_id, "->", status);
+        return Response.json({ success: true, status });
+      } catch (err) {
+        console.error("/api/me/status error:", err);
+        return Response.json({ error: "Kunne ikke oppdatere status", details: String(err) }, { status: 500 });
+      }
+    }
+
     // Logg ut (sletter session-cookie)
     if (url.pathname === "/api/logout" && request.method === "POST") {
       try {
