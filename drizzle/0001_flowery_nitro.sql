@@ -19,19 +19,14 @@ PRAGMA foreign_keys=off;
 -- SQL-transaksjoner i migrasjons-skript (bruk state.storage.transaction i JS).
 -- Derfor kjører vi endringene enkeltvis uten eksplisitt TRANSACTION-blokk.
 -- sjekk kolonner i users
--- Vi prøver bare å legge til hvis de ikke finnes
-ALTER TABLE `users` ADD COLUMN `username` text;
-ALTER TABLE `users` ADD COLUMN `password` text;
-ALTER TABLE `users` ADD COLUMN `status` text DEFAULT 'online';
-ALTER TABLE `users` ADD COLUMN `note` text;
+-- Ingen ALTER TABLE her for å unngå "duplicate column" på eksisterende DB-installasjoner.
+-- Hvis du trenger å legge til kolonner på en database som mangler dem, lag en
+-- egen migrasjon som kjøres kun mot databaser som trenger oppdateringen.
 
 PRAGMA foreign_keys=on;
 
 -- Opprett unik indeks for brukernavn hvis den ikke finnes
 CREATE UNIQUE INDEX IF NOT EXISTS `users_username_unique` ON `users` (`username`);
 
--- Forsøk å fjerne gamle kolonner bare hvis de eksisterer
--- (SQLite støtter ikke IF EXISTS for DROP COLUMN, men disse er sannsynligvis allerede fjernet)
--- Du kan ignorere feilmelding om de ikke finnes
-ALTER TABLE `users` DROP COLUMN `name`;
-ALTER TABLE `users` DROP COLUMN `email`;
+-- DROP COLUMN støttes ikke på alle SQLite-versjoner; fjern disse for å unngå feil
+-- dersom kolonnene allerede er fjernet eller ikke finnes.
