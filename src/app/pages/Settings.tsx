@@ -4,7 +4,7 @@ import { rwsdk } from "@/app/lib/rwsdk";
 import { getTheme, setTheme, subscribe, type Theme } from "@/app/lib/theme";
 import AppLayout from "@/components/ui/AppLayout";
 import { Button } from "@/components/ui/Button";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 export default function Settings() {
   const me = rwsdk.auth.useCurrentUser?.() ?? null;
@@ -41,9 +41,23 @@ export default function Settings() {
     localStorage.setItem("notifications.mentionsOnly", String(mentionsOnly));
   }, [mentionsOnly]);
 
-  function handleSave(e: React.FormEvent) {
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    alert(`Navn lagret: ${name.trim()}`);
+    setNameError(null);
+    const trimmed = name.trim();
+    if (trimmed.length < 2) {
+      setNameError("Navn må være minst 2 tegn");
+      return;
+    }
+    setSavingName(true);
+    const res = await rwsdk.auth.updateName(trimmed);
+    setSavingName(false);
+    if (!res.ok) {
+      setNameError(res.error ?? "Kunne ikke lagre navn");
+      return;
+    }
   }
 
   async function handleLogout() {
@@ -91,17 +105,17 @@ export default function Settings() {
                            bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 
                            focus:ring-2 focus:ring-blue-500 outline-none"
               />
+              {nameError && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{nameError}</p>
+              )}
             </fieldset>
 
-            <section className="flex items-center gap-3">
-              <figure className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-700" aria-hidden />
-              <Button type="button" variant="secondary">
-                Endre avatar (kommer)
-              </Button>
-            </section>
+            <AvatarUploader />
 
             <footer>
-              <Button type="submit">Lagre navn</Button>
+              <Button type="submit" disabled={savingName}>
+                {savingName ? "Lagrer..." : "Lagre navn"}
+              </Button>
             </footer>
           </form>
         </article>
@@ -377,5 +391,72 @@ function UserStatusEditable() {
         </label>
       ))}
     </div>
+  );
+}
+
+/* AVATAR-OPPLASTER */
+function AvatarUploader() {
+  const me = rwsdk.auth.useCurrentUser?.() ?? null;
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setPreview(null);
+  }, [me?.avatarUrl]);
+
+  const current = useMemo(() => preview ?? me?.avatarUrl ?? null, [preview, me?.avatarUrl]);
+
+  async function onSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    setError(null);
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      setError("Filen må være et bilde");
+      return;
+    }
+    if (f.size > 2 * 1024 * 1024) {
+      setError("Bildet er for stort (maks 2MB)");
+      return;
+    }
+    const url = URL.createObjectURL(f);
+    setPreview(url);
+  }
+
+  async function onUpload() {
+    const file = fileRef.current?.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    const res = await rwsdk.auth.updateAvatar(file);
+    setUploading(false);
+    if (!res.ok) {
+      setError(res.error ?? "Kunne ikke laste opp avatar");
+      return;
+    }
+    // clear preview since avatarUrl is now set via rwsdk.notify
+    setPreview(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  return (
+    <section className="flex items-center gap-4">
+      <figure className="h-16 w-16 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+        {current ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={current} alt="Avatar" className="h-full w-full object-cover"/>
+        ) : (
+          <span className="text-xs text-gray-500">Ingen</span>
+        )}
+      </figure>
+      <div className="flex items-center gap-2">
+        <input ref={fileRef} type="file" accept="image/*" onChange={onSelect} />
+        <Button type="button" variant="secondary" onClick={onUpload} disabled={uploading}>
+          {uploading ? "Laster opp..." : "Last opp"}
+        </Button>
+      </div>
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+    </section>
   );
 }

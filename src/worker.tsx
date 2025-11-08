@@ -8,6 +8,7 @@ import { sessions, users } from "./db/schema";
 export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
+  R2?: R2Bucket; // R2 bucket for avatar
   VERBOSE?: string;
 }
 
@@ -27,6 +28,107 @@ export default {
     // Ignorer Chrome sine devtools-requests
     if (url.pathname === "/favicon.ico" || url.pathname.startsWith("/.well-known")) {
       return new Response(null, { status: 204 });
+    }
+
+    // Oppdater brukernavn (visningsnavn)
+    if (url.pathname === "/api/me/name" && request.method === "POST") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
+        const token = match ? match[1] : null;
+        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        // Valider session
+        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
+        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
+        const sess = s[0] as any;
+
+        const { name } = (await request.json()) as { name?: string };
+        const next = (name ?? "").trim();
+        if (!next) return Response.json({ error: "Navn kan ikke være tomt" }, { status: 400 });
+        if (next.length < 2) return Response.json({ error: "Navn må være minst 2 tegn" }, { status: 400 });
+
+        // Sjekk at brukernavn ikke er tatt av andre
+        const existing = await db.select().from(users).where(eq(users.username, next)).all();
+        if (existing.some((u: any) => (u.id ?? u.ID) !== (sess.userId ?? sess.user_id))) {
+          return Response.json({ error: "Brukernavnet er allerede tatt" }, { status: 409 });
+        }
+
+        await db.update(users).set({ username: next }).where(eq(users.id, sess.userId ?? sess.user_id));
+
+        return Response.json({ success: true, name: next });
+      } catch (err) {
+        console.error("/api/me/name error:", err);
+        return Response.json({ error: "Kunne ikke oppdatere navn", details: String(err) }, { status: 500 });
+      }
+    }
+
+    // Last opp/oppdater avatar-bilde
+    if (url.pathname === "/api/me/avatar" && request.method === "POST") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
+        const token = match ? match[1] : null;
+        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        // Valider session
+        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
+        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
+        const sess = s[0] as any;
+
+        const form = await request.formData();
+        const file = form.get("avatar");
+        if (!file || typeof file === "string") {
+          return Response.json({ error: "Mangler avatar-fil" }, { status: 400 });
+        }
+
+        const ct = (file as File).type || "application/octet-stream";
+        const size = (file as File).size || 0;
+        if (size > 2 * 1024 * 1024) {
+          return Response.json({ error: "Bildet er for stort (maks 2MB)" }, { status: 413 });
+        }
+
+        const userId = sess.userId ?? sess.user_id;
+        const key = `avatars/${userId}`;
+
+        if (env.R2) {
+          // Last opp til R2 med riktig content-type
+          await env.R2.put(key, (file as File).stream(), { httpMetadata: { contentType: ct } });
+          const urlPath = `/api/avatar/${userId}?v=${Date.now()}`; // cache-busting
+          await db.update(users).set({ avatarUrl: urlPath }).where(eq(users.id, userId));
+          return Response.json({ success: true, avatarUrl: urlPath });
+        } else {
+          // Fallback: lagre som data-URL direkte i DB (kun dev-fallback)
+          const arrayBuffer = await (file as File).arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          const dataUrl = `data:${ct};base64,${base64}`;
+          await db.update(users).set({ avatarUrl: dataUrl }).where(eq(users.id, userId));
+          return Response.json({ success: true, avatarUrl: dataUrl });
+        }
+      } catch (err) {
+        console.error("/api/me/avatar error:", err);
+        return Response.json({ error: "Kunne ikke oppdatere avatar", details: String(err) }, { status: 500 });
+      }
+    }
+
+    // Hent avatar fra R2
+    if (url.pathname.startsWith("/api/avatar/") && request.method === "GET") {
+      try {
+        const userId = url.pathname.split("/api/avatar/")[1];
+        if (!userId) return new Response("Not found", { status: 404 });
+        if (!env.R2) return new Response("R2 ikke konfigurert", { status: 501 });
+        const key = `avatars/${userId}`;
+        const obj = await env.R2.get(key);
+        if (!obj) return new Response("Not found", { status: 404 });
+        const headers = new Headers();
+        const ct = obj.httpMetadata?.contentType || "application/octet-stream";
+        headers.set("Content-Type", ct);
+        headers.set("Cache-Control", "public, max-age=3600");
+        return new Response(obj.body, { status: 200, headers });
+      } catch (err) {
+        console.error("/api/avatar error:", err);
+        return new Response("Internal error", { status: 500 });
+      }
     }
 
     // ----------------------------------------------------------

@@ -69,6 +69,51 @@ export const rwsdk = {
       } catch (_) {}
       notify();
     },
+    async updateName(name: string): Promise<{ ok: boolean; error?: string }> {
+      try {
+        const res = await fetch("/api/me/name", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+          credentials: "same-origin",
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          return { ok: false, error: (data as any)?.error ?? `HTTP ${res.status}` };
+        }
+        const data = (await res.json()) as any;
+        if (me) {
+          me = { ...me, name: data.name } as typeof me;
+        }
+        notify();
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: String(err) };
+      }
+    },
+    async updateAvatar(file: File): Promise<{ ok: boolean; avatarUrl?: string; error?: string }> {
+      try {
+        const form = new FormData();
+        form.append("avatar", file);
+        const res = await fetch("/api/me/avatar", {
+          method: "POST",
+          body: form,
+          credentials: "same-origin",
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          return { ok: false, error: (data as any)?.error ?? `HTTP ${res.status}` };
+        }
+        const data = (await res.json()) as any;
+        if (me) {
+          me = { ...me, avatarUrl: data.avatarUrl } as typeof me;
+        }
+        notify();
+        return { ok: true, avatarUrl: data.avatarUrl };
+      } catch (err) {
+        return { ok: false, error: String(err) };
+      }
+    },
   },
 
   chat: {
