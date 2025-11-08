@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Nullstill alt hvitt rundt appen */
+html,
+body,
+#__next {
+  @apply h-full w-full m-0 p-0 bg-transparent;
+}
+
+/* Sørg for at alt oppfører seg riktig */
+* {
+  @apply box-border;
+}
+
+/* Dark mode */
 .dark {
   @apply bg-gray-900 text-white;
 }

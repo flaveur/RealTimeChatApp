@@ -1,12 +1,15 @@
 import { drizzle } from "drizzle-orm/d1";
-import * as schema from "./schema";
 
-export const createDB = (env: Env) => {
-  // Cloudflare binder D1-instansen til env.DB via wrangler.toml
-  return drizzle(env.DB, { schema });
-};
+/**
+ * Oppretter en Drizzle databaseinstans fra Cloudflare D1.
+ * 
+ * @param env miljøobjekt fra Worker (inneholder env.DB)
+ * @returns drizzle-tilkobling til databasen
+ */
+export function createDB(env: { DB: D1Database }) {
+  if (!env.DB) {
+    throw new Error("⚠️ D1-database mangler i miljøet (env.DB)");
+  }
 
-// Typen Env sørger for at TypeScript vet at DB finnes
-export interface Env {
-  DB: D1Database;
+  return drizzle(env.DB);
 }

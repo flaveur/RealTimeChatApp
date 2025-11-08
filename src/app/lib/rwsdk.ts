@@ -56,7 +56,8 @@ export const rwsdk = {
       return () => {};
     },
     async send(threadId: string, text: string): Promise<void> {
-      console.log("SEND →", threadId, text);
+      // use debug so normal console output isn't noisy in dev terminals
+      console.debug("SEND →", threadId, text);
     }
   }
 };

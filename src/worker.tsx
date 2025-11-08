@@ -1,133 +1,108 @@
+import * as bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { createDB } from "./db/client";
 import { users } from "./db/schema";
 
 export interface Env {
   DB: D1Database;
+  ASSETS: Fetcher; // 
+  VERBOSE?: string;
+}
+
+interface RegisterBody {
+  username: string;
+  email: string;
+  password: string;
 }
 
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     const db = createDB(env);
+    const VERBOSE = env.VERBOSE === "true";
 
-  // Håndter kun API-ruter her. La andre forespørsler falle gjennom til dev-serveren
-  // eller statisk fil-håndterer, slik at appens HTML/CSS/JS serveres av Vite i utvikling.
-    if (!url.pathname.startsWith("/api/")) {
-      return fetch(request);
+    // Ignorer Chrome sine devtools-requests
+    if (url.pathname === "/favicon.ico" || url.pathname.startsWith("/.well-known")) {
+      return new Response(null, { status: 204 });
     }
 
-    // Legg til bruker (POST /api/add-user)
-    if (url.pathname === "/api/add-user" && request.method === "POST") {
-      try {
-        type UserPayload = {
-          id?: string;
-          username?: string;
-          email?: string;
-          password?: string;
-          status?: string;
-        };
-
-        const body = (await request.json()) as UserPayload;
-        const { id, username, email, password, status } = body;
-
-        if (!username || !email || !password) {
-          return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400, headers: { "Content-Type": "application/json" } });
-        }
-
-        await db.insert(users).values({
-          id: id || crypto.randomUUID(),
-          username,
-          email,
-          password,
-          status: status || "offline",
-        });
-
-        return new Response(JSON.stringify({ message: "User added successfully" }), { headers: { "Content-Type": "application/json" } });
-      } catch (err) {
-        return new Response(
-          JSON.stringify({ error: "Database error", details: String(err) }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-  // Register-endepunkt brukt av frontend (POST /api/register)
+    /* =====================================
+       1. API-ruter håndteres først
+    ===================================== */
     if (url.pathname === "/api/register" && request.method === "POST") {
       try {
-        const body = (await request.json()) as {
-          username?: string;
-          email?: string;
-          password?: string;
-        };
+        const { username, email, password } = (await request.json()) as RegisterBody;
 
-        const { username, email, password } = body;
         if (!username || !email || !password) {
-          return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400, headers: { "Content-Type": "application/json" } });
+          return Response.json({ error: "Alle felt må fylles ut" }, { status: 400 });
         }
 
-  // Sjekk om brukernavn eller e-post allerede finnes
-        const existingByUsername = await db.select().from(users).where(eq(users.username, username)).all();
-        if (existingByUsername.length > 0) {
-          return new Response(JSON.stringify({ error: "Username already taken" }), { status: 409, headers: { "Content-Type": "application/json" } });
-        }
-        const existingByEmail = await db.select().from(users).where(eq(users.email, email)).all();
-        if (existingByEmail.length > 0) {
-          return new Response(JSON.stringify({ error: "Email already registered" }), { status: 409, headers: { "Content-Type": "application/json" } });
+        const existingEmail = await db.select().from(users).where(eq(users.email, email)).all();
+        if (existingEmail.length > 0) {
+          return Response.json({ error: "E-post er allerede registrert" }, { status: 409 });
         }
 
-  // Hash passordet (SHA-256) før lagring
+        // Hash passordet
         const encoder = new TextEncoder();
         const pwBuffer = encoder.encode(password);
         const digest = await crypto.subtle.digest("SHA-256", pwBuffer);
-        const hashArray = Array.from(new Uint8Array(digest));
-        const hashed = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+        const hashed = Array.from(new Uint8Array(digest))
+          .map(b => b.toString(16).padStart(2, "0"))
+          .join("");
 
-        const id = crypto.randomUUID();
-        await db.insert(users).values({ id, username, email, password: hashed, status: "offline" });
+        await db.insert(users).values({
+          id: crypto.randomUUID(),
+          username,
+          email,
+          password: hashed,
+          status: "offline",
+        });
 
-        return new Response(JSON.stringify({ message: "User registered" }), { status: 201, headers: { "Content-Type": "application/json" } });
+        if (VERBOSE) console.log("✅ Ny bruker registrert:", username);
+        return Response.json({ success: true }, { status: 201 });
       } catch (err) {
-        return new Response(JSON.stringify({ error: "Registration failed", details: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
+        console.error("Feil under registrering:", err);
+        return Response.json(
+          { error: "Serverfeil under registrering", details: String(err) },
+          { status: 500 }
+        );
       }
     }
 
-    // Hent alle brukere (GET /api/test-db)
     if (url.pathname === "/api/test-db" && request.method === "GET") {
       try {
         const allUsers = await db.select().from(users).all();
-        return new Response(JSON.stringify(allUsers, null, 2), {
-          headers: { "Content-Type": "application/json; charset=utf-8" },
-        });
+        return Response.json({ success: true, users: allUsers });
       } catch (err) {
-        return new Response(
-          JSON.stringify({ error: "Database error", details: String(err) }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
-        );
+        console.error("Feil i test-db:", err);
+        return Response.json({ error: "Databasefeil", details: String(err) }, { status: 500 });
       }
     }
 
-    // Slett bruker (DELETE /api/delete-user?id=...)
     if (url.pathname === "/api/delete-user" && request.method === "DELETE") {
       try {
         const id = url.searchParams.get("id");
-        if (!id) {
-          return new Response(JSON.stringify({ error: "Missing user id" }), { status: 400, headers: { "Content-Type": "application/json" } });
-        }
-
-  await db.delete(users).where(eq(users.id, id));
-
-        return new Response(JSON.stringify({ message: "User deleted successfully" }), { headers: { "Content-Type": "application/json" } });
+        if (!id) return Response.json({ error: "Mangler bruker-ID" }, { status: 400 });
+        await db.delete(users).where(eq(users.id, id));
+        return Response.json({ success: true });
       } catch (err) {
-        return new Response(
-          JSON.stringify({ error: "Database error", details: String(err) }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
-        );
+        console.error("Feil under sletting:", err);
+        return Response.json({ error: "Databasefeil", details: String(err) }, { status: 500 });
       }
     }
 
-    // Standard svar
-    return new Response("✅ Worker running!", {
+    /* =====================================
+       2. Serve React-bygget fra "dist"
+    ===================================== */
+    try {
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (assetResponse.status !== 404) return assetResponse;
+    } catch (err) {
+      console.error("ASSETS fetch error:", err);
+    }
+
+    // Fallback hvis ingenting matcher
+    return new Response("✅ Worker kjører, men ingen rute matchet", {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   },

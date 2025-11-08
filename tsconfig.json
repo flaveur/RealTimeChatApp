@@ -1,46 +1,23 @@
 {
   "compilerOptions": {
-    /* ---------------------------
-      Module & language setup
-    ----------------------------*/
-    "target": "es2021",
-    "lib": ["DOM", "DOM.Iterable", "ESNext", "ES2022"],
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "jsx": "react-jsx",
-    "module": "es2022",
-    "moduleResolution": "bundler",
-
-    /* ---------------------------
-       Path aliases (fixes @/)
-    ----------------------------*/
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@generated/*": ["./generated/*"]
-    },
-
-    /* ---------------------------
-       Misc settings
-    ----------------------------*/
-  "types": ["@cloudflare/workers-types"],
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "strict": true,
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+  "types": ["vite/client", "@cloudflare/workers-types"],
+  "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-
-  /* ---------------------------
-     Extra type declarations
-  ----------------------------*/
-  "include": [
-    "src",
-    "types"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src", "types"],
+  "exclude": ["node_modules", "dist"]
 }

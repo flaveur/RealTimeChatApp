@@ -4,13 +4,17 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
-  root: ".",
+  root: "src/app",
   build: {
-    outDir: "dist-frontend",
+    outDir: "../../dist-frontend",
+    emptyOutDir: true,
   },
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),
     },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom"],
   },
 });

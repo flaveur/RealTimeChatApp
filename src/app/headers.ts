@@ -1,8 +1,7 @@
 import { RouteMiddleware } from "rwsdk/router";
 
-export const setCommonHeaders =
-  (): RouteMiddleware =>
-  ({ response, rw: { nonce } }) => {
+export const setCommonHeaders = (): RouteMiddleware => ({ response, rw }) => {
+    const nonce = rw?.nonce;
     if (!import.meta.env.VITE_IS_DEV_SERVER) {
       // Forces browsers to always use HTTPS for a specified time period (2 years)
       response.headers.set(

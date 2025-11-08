@@ -1,35 +1,34 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "real-time-chat-app",
   "main": "src/worker.tsx",
   "compatibility_date": "2025-08-29",
   "compatibility_flags": ["nodejs_compat"],
 
-  // Offentlige filer (for statiske ressurser)
+
   "assets": {
     "binding": "ASSETS",
-    "directory": "public"
+    "directory": "dist"
   },
 
-  // Logging og innsikt
+  // Logging & innsikt (kan stå på)
   "observability": {
     "enabled": true
   },
 
-  // Miljøvariabler (du kan legge til flere senere)
+  // Miljøvariabler (kan utvides senere)
   "vars": {},
 
-  // D1-database — peker nå til den ekte chatapp_db
+  // D1-database
   "d1_databases": [
     {
-      "binding": "DB", // må matche env.DB i worker.tsx
+      "binding": "DB", // må matche Env.DB i worker.tsx
       "database_name": "chatapp_db",
-      "database_id": "933cc601-b52d-4886-be7d-27e49d68eb6a",
+      "database_id": "933cc601-b52d-4886-be7d-27e49d68eb6a", //
       "migrations_dir": "drizzle"
     }
   ],
 
-  // R2-bøtte for filopplastinger
+  //R2 Bucket for bilder/filer
   "r2_buckets": [
     {
       "binding": "R2",

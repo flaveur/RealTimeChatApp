@@ -1,5 +1,5 @@
 import * as ReactDOMClient from "react-dom/client";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./styles.css";
 
 import FriendList from "./pages/FriendList";
@@ -22,6 +22,8 @@ function App() {
           <Route path="/friends" element={<FriendList />} />
           <Route path="/notes" element={<NotesPage />} />
           <Route path="/settings" element={<Settings />} />
+          {/* Catch-all: redirect unknown routes to /messages to avoid blank pages */}
+          <Route path="*" element={<Navigate to="/messages" replace />} />
         </Routes>
       </div>
     </BrowserRouter>
