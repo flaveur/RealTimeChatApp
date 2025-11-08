@@ -63,7 +63,7 @@ export default {
       } catch (err) {
         console.error("Feil under registrering:", err);
         return Response.json(
-          { error: "Serverfeil under registrering", details: String(err) },
+          { error: "Brukernavn eller e-post er allerede i bruk", details: String(err) },
           { status: 500 }
         );
       }

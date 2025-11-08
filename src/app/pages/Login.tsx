@@ -36,8 +36,8 @@ export default function Login() {
         throw new Error(msg || "Kunne ikke logge inn");
       }
 
-      // Cookie settes av server, naviger videre
-      navigate("/messages");
+  // Cookie settes av server, naviger videre og vis suksessmelding
+  navigate("/messages", { state: { flash: "Innlogging vellykket" } });
     } catch (err: any) {
       setError(err.message || "Noe gikk galt");
     } finally {

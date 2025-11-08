@@ -2,12 +2,15 @@
 
 import { rwsdk, type RWMessage, type RWThread } from "@/app/lib/rwsdk";
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 
 export default function Messages() {
   const [threads, setThreads] = useState<RWThread[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<RWMessage[]>([]);
+  const location = useLocation();
+  const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
     rwsdk.chat.listThreads().then((t: RWThread[]) => {
@@ -21,6 +24,17 @@ export default function Messages() {
     const off = rwsdk.chat.subscribe(activeId, setMessages);
     return off;
   }, [activeId]);
+
+  // Show flash message passed via navigation state (e.g. after register/login)
+  useEffect(() => {
+    const state: any = (location && (location as any).state) || null;
+    const msg = state?.flash as string | undefined;
+    if (msg) {
+      setFlash(msg);
+      const t = setTimeout(() => setFlash(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [location]);
 
   const activeTitle = useMemo(
     () => threads.find(t => t.id === activeId)?.title ?? "",
@@ -61,7 +75,17 @@ export default function Messages() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">{activeTitle}</h2>
           </header>
 
-          <section className="flex-1 space-y-3 overflow-y-auto px-6 py-4">
+            {flash && (
+              <div className="px-6 py-3">
+                <div className="max-w-[1400px] mx-auto">
+                  <aside className="mb-2 inline-block rounded-lg bg-green-50 border border-green-200 text-green-800 px-4 py-2 text-sm">
+                    {flash}
+                  </aside>
+                </div>
+              </div>
+            )}
+
+            <section className="flex-1 space-y-3 overflow-y-auto px-6 py-4">
             {messages.map(m => (
               <MessageBubble key={m.id} message={m} selfId="u-anne" />
             ))}

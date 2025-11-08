@@ -29,6 +29,13 @@
       "when": 1762439459535,
       "tag": "0003_soft_hiroim",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1762581510261,
+      "tag": "0004_slippery_jackal",
+      "breakpoints": true
     }
   ]
 }

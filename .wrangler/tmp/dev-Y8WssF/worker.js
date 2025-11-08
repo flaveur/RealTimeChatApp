@@ -6744,28 +6744,60 @@ __name(createDB, "createDB");
 // src/db/schema.ts
 var users = sqliteTable("users", {
   id: text("id").primaryKey(),
+  // UUID generert i Worker
   username: text("username").notNull().unique(),
+  // Unikt brukernavn
   email: text("email").notNull().unique(),
+  // Unik e-post
   password: text("password").notNull(),
-  status: text("status").default("offline")
+  // Hashet passord
+  status: text("status").default("offline"),
+  // "online" / "offline"
+  bio: text("bio"),
+  // Kort beskrivelse (valgfritt)
+  avatarUrl: text("avatar_url"),
+  // Lenke til profilbilde (valgfritt)
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP")
 });
 var messages = sqliteTable("messages", {
   id: text("id").primaryKey(),
-  // ✅ fjernet default(sql...)
+  // UUID
   senderId: text("sender_id").notNull(),
+  // Hvem som sendte
   receiverId: text("receiver_id").notNull(),
+  // Hvem som mottok (privat melding)
   content: text("content").notNull(),
+  // Meldingsinnhold
+  chatId: text("chat_id"),
+  // (valgfritt) for gruppekontroll
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+  editedAt: text("edited_at")
+  // hvis meldingen er redigert
+});
+var friends = sqliteTable("friends", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  // Hovedbrukeren
+  friendId: text("friend_id").notNull(),
+  // Den andre brukeren
+  status: text("status").default("pending"),
+  // pending / accepted / blocked
   createdAt: text("created_at").default("CURRENT_TIMESTAMP")
 });
 var sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
-  token: text("token").notNull().unique()
+  token: text("token").notNull().unique(),
+  expiresAt: integer("expires_at")
+  // tidspunkt (UNIX-timestamp)
 });
-var friends = sqliteTable("friends", {
+var notes = sqliteTable("notes", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
-  friendId: text("friend_id").notNull()
+  title: text("title").notNull(),
+  content: text("content"),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+  updatedAt: text("updated_at")
 });
 
 // src/worker.tsx
@@ -6803,7 +6835,7 @@ var worker_default = {
       } catch (err) {
         console.error("Feil under registrering:", err);
         return Response.json(
-          { error: "Serverfeil under registrering", details: String(err) },
+          { error: "Brukernavn eller e-post er allerede i bruk", details: String(err) },
           { status: 500 }
         );
       }
@@ -6892,7 +6924,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-QLNadX/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-j1bupk/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -6924,7 +6956,7 @@ function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-QLNadX/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-j1bupk/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

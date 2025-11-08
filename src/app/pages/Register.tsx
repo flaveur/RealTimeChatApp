@@ -40,8 +40,8 @@ export default function Register() {
         throw new Error(msg);
       }
 
-      // Registrering vellykket - bytt side uten å laste om
-      navigate("/messages");
+  // Registrering vellykket - bytt side uten å laste om og vis suksessmelding
+  navigate("/messages", { state: { flash: "Registrering vellykket" } });
     } catch (err: any) {
       setError(err.message || "Noe gikk galt");
     } finally {
