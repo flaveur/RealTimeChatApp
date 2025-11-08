@@ -1,20 +1,30 @@
 import react from "@vitejs/plugin-react";
-import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
+// Dette er standardkonfigurasjonen for ditt prosjekt
 export default defineConfig({
   plugins: [react()],
-  root: "src/app",
+
+  // Vite skal lete etter index.html i rotmappa (C:\RealTimeChatApp)
+  root: ".",
+
+  // Sikrer at dev-server kjører på IPv4 (ikke [::1])
+  server: {
+    host: "127.0.0.1",
+    port: 5173,
+    open: true, // Åpner nettleseren automatisk
+  },
+
+  // Output bygges til "dist" ved build
   build: {
     outDir: "dist",
     emptyOutDir: true,
   },
-  resolve: {  
+
+  // Støtte for absolutte imports (f.eks. "@/app/pages/...")
+  resolve: {
     alias: {
-      "@": resolve(__dirname, "src"),
+      "@": "/src",
     },
-  },
-  optimizeDeps: {
-    include: ["react", "react-dom"],
   },
 });

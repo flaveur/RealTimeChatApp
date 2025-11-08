@@ -1,223 +1,214 @@
 'use client';
 
+import { rwsdk } from "@/app/lib/rwsdk";
+import { getTheme, setTheme, subscribe, type Theme } from "@/app/lib/theme";
+import AppLayout from "@/components/ui/AppLayout";
+import { Button } from "@/components/ui/Button";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import Sidebar from "../../components/Sidebar";
-import { rwsdk } from "../lib/rwsdk";
-import {
-  applyTheme,
-  getTheme,
-  setTheme,
-  subscribe,
-  type Theme,
-} from "../lib/theme";
-import UserStatusEditable from "./UserStatusEditable";
 
 export default function Settings() {
-  // Tailwind dark-mode strategy (html.dark) – bruk applyTheme ved mount
-  // Ref: https://tailwindcss.com/docs/dark-mode
-  useEffect(() => {
-    applyTheme();
-  }, []);
-
-  // ✅ Bruk hooken direkte i stedet for useSyncExternalStore
-  // Live-bruker (navn/status) via enkel store + useSyncExternalStore
-  // Ref: https://react.dev/reference/react/useSyncExternalStore
   const me = rwsdk.auth.useCurrentUser?.() ?? null;
-
-  // local state for navn (lagres til localStorage via rwsdk.auth.setName)
-  // Ref: https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
   const [name, setName] = useState(me?.name ?? "");
+  const theme = useSyncExternalStore(subscribe, getTheme, () => "system");
+
   useEffect(() => {
     setName(me?.name ?? "");
   }, [me?.name]);
 
-  // Tema (light/dark/system), med synk mot html.dark
-  const theme = useSyncExternalStore(
-    subscribe,
-    () => getTheme(),
-    () => "system"
-  );
-
-  function saveName(e: React.FormEvent) {
+  function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: Implementer setName i rwsdk.auth i neste oblig
-  console.log("Lagrer navn:", name.trim());
-  // Informer brukeren at navnet er lagret (TODO: persister via rwsdk.auth.setName)
-  alert(`Navn lagret: ${name.trim()}`);
+    alert(`Navn lagret: ${name.trim()}`);
+  }
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } finally {
+      window.location.href = "/login";
+    }
   }
 
   return (
-    <section className="min-h-screen bg-gray-100 dark:bg-gray-950">
-      <main className="mx-auto flex max-w-[1400px] gap-0 p-4">
-        <Sidebar />
-        
-        <section className="flex-1 bg-white dark:bg-gray-900 rounded-2xl p-6 space-y-8">
-          <header>
-            <h1 className="text-2xl font-semibold dark:text-white">Innstillinger</h1>
-            <p className="text-gray-600 dark:text-gray-400">Tilpass konto, status og utseende</p>
+    <AppLayout title="Innstillinger">
+      <section className="space-y-6">
+
+        {/* PROFIL */}
+        <article
+          aria-labelledby="profil"
+          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        >
+          <header className="mb-4">
+            <h2 id="profil" className="text-lg font-semibold text-gray-900 dark:text-white">
+              Profil
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Oppdater navnet ditt og profilbilde
+            </p>
           </header>
 
-      {/* PROFIL (kort/seksjon) – inspirasjon: Tailwind UI Settings */}
-      {/* https://tailwindui.com/components/application-ui/forms/settings */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-        <header className="mb-4">
-          <h2 className="text-lg font-medium dark:text-white">Profil</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Oppdater visningsnavnet ditt</p>
-        </header>
+          <form onSubmit={handleSave} className="space-y-4 max-w-sm">
+            <fieldset>
+              <legend className="sr-only">Brukernavn</legend>
+              <label
+                htmlFor="name"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Visningsnavn
+              </label>
+              <input
+                id="name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Skriv navnet ditt"
+                className="mt-1 w-full rounded-xl border border-gray-300 dark:border-gray-600 
+                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 
+                           focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </fieldset>
 
-        {/* Tilgjengelig skjema (fieldset/label/legend) – MDN */}
-        {/* https://developer.mozilla.org/en-US/docs/Learn/Forms/Accessibility */}
-        <form onSubmit={saveName} className="max-w-md space-y-4">
-          <fieldset className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium dark:text-gray-200">
-              Visningsnavn
-            </label>
-            <input
-              id="name"
-              name="name"
-              className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 px-3 py-2 outline-none focus:border-brand-blue dark:focus:border-blue-400"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Skriv navnet ditt"
-            />
-          </fieldset>
+            <section className="flex items-center gap-3">
+              <figure className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-700" aria-hidden />
+              <Button type="button" variant="secondary">
+                Endre avatar (kommer)
+              </Button>
+            </section>
 
-          <section aria-label="Avatar" className="flex items-center gap-3">
-            <span
-              aria-hidden
-              className="inline-block h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"
-            />
-            <button
-              type="button"
-              className="rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200"
-            >
-              Endre avatar (kommer)
-            </button>
-          </section>
+            <footer>
+              <Button type="submit">Lagre navn</Button>
+            </footer>
+          </form>
+        </article>
+
+        {/* STATUS */}
+        <article
+          aria-labelledby="status"
+          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        >
+          <header className="mb-4">
+            <h2 id="status" className="text-lg font-semibold text-gray-900 dark:text-white">
+              Status
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Velg om du er tilgjengelig, opptatt eller borte
+            </p>
+          </header>
+
+          <UserStatusEditable />
+        </article>
+
+        {/* TEMA */}
+        <article
+          aria-labelledby="theme"
+          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        >
+          <header className="mb-4">
+            <h2 id="theme" className="text-lg font-semibold text-gray-900 dark:text-white">
+              Utseende
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Velg lys eller mørk modus
+            </p>
+          </header>
+
+          <form className="space-y-2">
+            <fieldset>
+              <legend className="sr-only">Tema</legend>
+              {(["light", "dark", "system"] as Theme[]).map((t) => (
+                <label
+                  key={t}
+                  className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                >
+                  <input
+                    type="radio"
+                    name="theme"
+                    value={t}
+                    checked={theme === t}
+                    onChange={() => setTheme(t)}
+                  />
+                  <span className="capitalize">
+                    {t === "light" ? "Lyst" : t === "dark" ? "Mørkt" : "System"}
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          </form>
+        </article>
+
+        {/* VARSLER */}
+        <article
+          aria-labelledby="notifications"
+          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        >
+          <header className="mb-4">
+            <h2 id="notifications" className="text-lg font-semibold text-gray-900 dark:text-white">
+              Varsler
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Funksjonalitet kommer senere
+            </p>
+          </header>
+
+          <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            <li className="flex items-center gap-2">
+              <input type="checkbox" disabled /> Lyd ved ny melding
+            </li>
+            <li className="flex items-center gap-2">
+              <input type="checkbox" disabled /> Desktop-varsler
+            </li>
+          </ul>
+        </article>
+
+        {/* KONTO */}
+        <article
+          aria-labelledby="account"
+          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        >
+          <header className="mb-4">
+            <h2 id="account" className="text-lg font-semibold text-gray-900 dark:text-white">
+              Konto
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Administrer pålogging og brukerkonto
+            </p>
+          </header>
 
           <footer>
-            <button
-              type="submit"
-              className="rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white"
-            >
-              Lagre navn
-            </button>
+            <Button variant="danger" onClick={handleLogout}>
+              Logg ut
+            </Button>
           </footer>
-        </form>
+        </article>
       </section>
+    </AppLayout>
+  );
+}
 
-      {/* STATUS – bruker redigerbar status-komponent (radio-løsning) */}
-      {/* Headless UI Radio Group inspirasjon (tilgjengelige radios): */}
-      {/* https://headlessui.com/react/radio-group */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-        <header className="mb-4">
-          <h2 className="text-lg font-medium dark:text-white">Status</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Velg om du er tilgjengelig, opptatt eller borte
-          </p>
-        </header>
-        <UserStatusEditable />
-      </section>
+/* STATUS-KOMPONENT */
+function UserStatusEditable() {
+  const [status, setStatus] = useState<"online" | "busy" | "away">("online");
+  const labels = { online: "Tilgjengelig", busy: "Opptatt", away: "Borte" };
 
-      {/* UTSEENDE – tema-valg, lagres i localStorage og applikeres til html.dark */}
-      {/* Tailwind Dark Mode (class): https://tailwindcss.com/docs/dark-mode */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-        <header className="mb-4">
-          <h2 className="text-lg font-medium dark:text-white">Utseende</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Tema for appen</p>
-        </header>
-
-        <form>
-          <fieldset className="space-y-2">
-            <legend className="sr-only">Tema</legend>
-
-            {(["light", "dark", "system"] as Theme[]).map((t) => (
-              <label key={t} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <input
-                  type="radio"
-                  name="theme"
-                  value={t}
-                  checked={theme === t}
-                  onChange={() => setTheme(t)}
-                />
-                <span className="capitalize">
-                  {t === "light" ? "Lyst" : t === "dark" ? "Mørkt" : "System"}
-                </span>
-              </label>
-            ))}
-          </fieldset>
-        </form>
-      </section>
-
-      {/* VARSLER – placeholder (disabled) */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-        <header className="mb-4">
-          <h2 className="text-lg font-medium dark:text-white">Varsler</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Visualisering for alpha, ikke aktiv ennå</p>
-        </header>
-
-        <ul className="space-y-2">
-          <li>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input type="checkbox" disabled />
-              Lyd ved ny melding
-            </label>
-          </li>
-          <li>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input type="checkbox" disabled />
-              Desktop-varsler
-            </label>
-          </li>
-        </ul>
-      </section>
-
-      {/* PERSONVERN – placeholder (disabled toggles) */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-        <header className="mb-4">
-          <h2 className="text-lg font-medium dark:text-white">Personvern</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Kommer i beta</p>
-        </header>
-
-        <ul className="space-y-2">
-          <li>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input type="checkbox" disabled />
-              Lesekvitteringer
-            </label>
-          </li>
-          <li>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input type="checkbox" disabled />
-              Vis "skriver…"-indikator
-            </label>
-          </li>
-        </ul>
-      </section>
-
-      {/* LOGG UT */}
-      <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-        <header className="mb-4">
-          <h2 className="text-lg font-medium dark:text-white">Konto</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Administrer din pålogging</p>
-        </header>
-
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              await fetch("/api/logout", { method: "POST" });
-            } finally {
-              window.location.href = "/login";
-            }
-          }}
-          className="rounded-xl border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
-        >
-          Logg ut
-        </button>
-          </section>
-        </section>
-      </main>
-    </section>
+  return (
+    <form className="space-y-2">
+      <fieldset>
+        <legend className="sr-only">Brukerstatus</legend>
+        {(["online", "busy", "away"] as const).map((s) => (
+          <label
+            key={s}
+            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+          >
+            <input
+              type="radio"
+              name="status"
+              value={s}
+              checked={status === s}
+              onChange={() => setStatus(s)}
+            />
+            <span>{labels[s]}</span>
+          </label>
+        ))}
+      </fieldset>
+    </form>
   );
 }

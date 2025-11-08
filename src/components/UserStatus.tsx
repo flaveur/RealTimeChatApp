@@ -1,55 +1,60 @@
-import { cn } from "@/app/lib/cn";
+'use client';
 
-type Props = {
-  name: string;
-  status?: "online" | "busy" | "away";
-  avatarUrl?: string;
-};
+import { rwsdk, type Status } from "@/app/lib/rwsdk";
+import { useSyncExternalStore } from "react";
 
-const statusColors = {
-  online: "bg-green-500",
-  busy: "bg-red-500",
-  away: "bg-yellow-400",
-};
+export default function UserStatus() {
+  // Abonner på endringer i brukeren fra rwsdk
+  const me = useSyncExternalStore(
+    rwsdk.auth.onChange,
+    () => rwsdk.auth.useCurrentUser(),
+    () => rwsdk.auth.useCurrentUser()
+  );
 
-export default function UserStatus({ name, status = "online", avatarUrl }: Props) {
+  if (!me)
+    return (
+      <aside className="text-gray-500 dark:text-gray-400 text-sm">
+        Laster brukerstatus...
+      </aside>
+    );
+
+  const labels: Record<Status, string> = {
+    online: "Tilgjengelig",
+    busy: "Opptatt",
+    away: "Borte",
+  };
+
+  const colors: Record<Status, string> = {
+    online: "bg-green-500",
+    busy: "bg-red-500",
+    away: "bg-yellow-400",
+  };
+
   return (
     <section
-      aria-label={`${name} sin status`}
-      className="flex items-center gap-3 px-4 pb-6"
+      aria-label="Brukerstatus"
+      className="flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-700
+                 bg-white dark:bg-gray-900 p-4 transition-colors shadow-sm"
     >
-      <figure className="relative">
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={`Profilbilde av ${name}`}
-            className="h-12 w-12 rounded-full object-cover"
-          />
-        ) : (
-          <span
-            aria-hidden="true"
-            className="block h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700"
-          />
-        )}
-
+      {/* Profilbilde + statusindikator */}
+      <figure
+        className="relative h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-700 flex-shrink-0"
+        aria-hidden
+      >
         <span
-          className={cn(
-            "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white",
-            statusColors[status]
-          )}
-          aria-label={status}
-          title={status}
+          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900 ${colors[me.status]}`}
+          title={labels[me.status]}
         />
-        <figcaption className="sr-only">
-          {`${name} er ${status}`}
-        </figcaption>
       </figure>
 
-      <article className="text-sm leading-tight">
-        <header>
-          <h2 className="font-medium text-gray-900 dark:text-white">{name}</h2>
-        </header>
-        <p className="text-gray-500 dark:text-gray-400 capitalize">{status}</p>
+      {/* Navn og status */}
+      <article className="flex-1">
+        <h2 className="text-sm font-medium text-gray-900 dark:text-white leading-tight">
+          {me.name}
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {labels[me.status]}
+        </p>
       </article>
     </section>
   );

@@ -1,159 +1,113 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-
-type Note = { id: string; title: string; body: string; updatedAt: number };
-const STORAGE_KEY = "notes.v1";
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 export default function Notes() {
-  const [notes, setNotes] = useState<Note[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [notes, setNotes] = useState<string[]>([]);
+  const [newNote, setNewNote] = useState("");
+  const [search, setSearch] = useState("");
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-    if (!selectedId && notes.length) setSelectedId(notes[0].id);
-  }, [notes, selectedId]);
-
-  const selected = useMemo(
-    () => notes.find((n) => n.id === selectedId) ?? null,
-    [notes, selectedId]
+  const filteredNotes = notes.filter((n) =>
+    n.toLowerCase().includes(search.toLowerCase())
   );
 
-  function createNote() {
-    const n: Note = {
-      id: crypto.randomUUID(),
-      title: "Nytt notat",
-      body: "",
-      updatedAt: Date.now(),
-    };
-    setNotes((ns) => [n, ...ns]);
-    setSelectedId(n.id);
+  function handleAddNote(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newNote.trim()) return;
+    setNotes((prev) => [newNote.trim(), ...prev]);
+    setNewNote("");
   }
 
-  function updateSelected(patch: Partial<Note>) {
-    if (!selected) return;
-    setNotes((ns) =>
-      ns.map((n) =>
-        n.id === selected.id ? { ...n, ...patch, updatedAt: Date.now() } : n
-      )
-    );
-  }
-
-  function saveSelected() {
-    if (!selected) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-  }
-
-  function deleteNote(id: string) {
-    const next = notes.filter((n) => n.id !== id);
-    setNotes(next);
-    if (selectedId === id) setSelectedId(next[0]?.id ?? null);
+  function handleDelete(note: string) {
+    setNotes((prev) => prev.filter((n) => n !== note));
   }
 
   return (
-    <main className="w-full p-6">
-      <section
-        aria-label="Notater"
-        className="grid grid-cols-[360px_minmax(0,1fr)] gap-14 items-start"
-      >
-        <section>
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Mine notater</h2>
+    <main className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-3xl p-4 sm:p-8 shadow-sm transition-colors">
+      {/* Topptekst */}
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">Mine notater</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Opprett, søk og administrer dine notater
+        </p>
+      </header>
 
-          {notes.length ? (
-            <ul className="grid gap-4">
-              {notes.map((n) => (
-                <li key={n.id}>
-                  <button
-                    onClick={() => setSelectedId(n.id)}
-                    className={`note-pill ${
-                      n.id === selectedId ? "note-pill-active" : ""
-                    } rounded-xl px-3 py-2 w-full text-left transition border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    title={new Date(n.updatedAt).toLocaleString()}
-                  >
-                    <strong>{n.title || "Uten tittel"}</strong>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-              Ingen notater ennå.
-            </p>
-          )}
+      {/* Søkefelt */}
+      <section aria-label="Søk etter notater" className="mb-6">
+        <form role="search" className="flex items-center gap-3">
+          <label htmlFor="search" className="sr-only">
+            Søk i notater
+          </label>
+          <input
+            id="search"
+            type="search"
+            placeholder="Søk i notater..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400
+                       focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+        </form>
+      </section>
 
-          <footer className="mt-5 flex gap-3">
-            <button
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition"
-              onClick={createNote}
-            >
-              ＋ Nytt notat
-            </button>
+      {/* Nytt notat */}
+      <section aria-label="Legg til nytt notat" className="mb-8">
+        <form onSubmit={handleAddNote} className="flex flex-col sm:flex-row gap-3">
+          <label htmlFor="newNote" className="sr-only">
+            Nytt notat
+          </label>
+          <textarea
+            id="newNote"
+            placeholder="Skriv et nytt notat..."
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            rows={3}
+            className="flex-1 resize-none px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 
+                       focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+          <Button type="submit" disabled={!newNote.trim()}>
+            Legg til
+          </Button>
+        </form>
+      </section>
 
-            {selected && (
-              <button
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition"
-                onClick={() => deleteNote(selected.id)}
+      {/* Notatliste */}
+      <section aria-label="Liste over notater">
+        {filteredNotes.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            {notes.length === 0
+              ? "Du har ingen notater ennå."
+              : "Ingen notater samsvarer med søket."}
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {filteredNotes.map((note, index) => (
+              <li
+                key={index}
+                className="group flex justify-between items-start gap-3 p-4 rounded-xl border 
+                           border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800
+                           hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
-                Slett
-              </button>
-            )}
-          </footer>
-        </section>
-
-        <article className="editor-wrap bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <section className="panel">
-            <header className="mb-3">
-              <input
-                className="w-full text-base font-semibold bg-transparent outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                value={selected?.title ?? "Nytt notat"}
-                onChange={(e) => updateSelected({ title: e.target.value })}
-                placeholder="Tittel"
-              />
-              <hr className="title-rule border-gray-200 dark:border-gray-700" />
-            </header>
-
-            <section className="panel-inner">
-              <textarea
-                className="editor-textarea h-[420px] w-full bg-transparent text-gray-900 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                placeholder="Skriv notat her..."
-                value={selected?.body || ""}
-                onChange={(e) => updateSelected({ body: e.target.value })}
-              />
-            </section>
-
-            {selected && (
-              <footer className="mt-4 flex justify-between items-center">
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Sist endret:{" "}
-                  {new Date(selected.updatedAt).toLocaleString()}
-                </span>
-
-                <div className="flex gap-3">
-                  <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
-                    onClick={saveSelected}
-                  >
-                    Lagre
-                  </button>
-
-                  <button
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition"
-                    onClick={() => deleteNote(selected.id)}
-                  >
-                    Slett
-                  </button>
-                </div>
-              </footer>
-            )}
-          </section>
-        </article>
+                <article className="flex-1">
+                  <p className="text-gray-800 dark:text-gray-200 whitespace-pre-line break-words">
+                    {note}
+                  </p>
+                </article>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() => handleDelete(note)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  Slett
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
   );

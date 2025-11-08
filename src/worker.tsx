@@ -1,13 +1,17 @@
 import { eq } from "drizzle-orm";
 import { createDB } from "./db/client";
-import { users } from "./db/schema";
+import { sessions, users } from "./db/schema";
 
+// ----------------------------------------------------------
+// Environment-variabler
+// ----------------------------------------------------------
 export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
   VERBOSE?: string;
 }
 
+// Body for /api/register
 interface RegisterBody {
   username: string;
   email: string;
@@ -38,11 +42,19 @@ export default {
           return Response.json({ error: "Alle felt må fylles ut" }, { status: 400 });
         }
 
+        // Sjekk at e-posten ikke finnes
         const existingEmail = await db.select().from(users).where(eq(users.email, email)).all();
         if (existingEmail.length > 0) {
           return Response.json({ error: "E-post er allerede registrert" }, { status: 409 });
         }
 
+        // Sjekk at brukernavn ikke finnes
+        const existingUsername = await db.select().from(users).where(eq(users.username, username)).all();
+        if (existingUsername.length > 0) {
+          return Response.json({ error: "Brukernavnet er allerede tatt" }, { status: 409 });
+        }
+
+        // Hash passord med SHA-256
         const encoder = new TextEncoder();
         const pwBuffer = encoder.encode(password);
         const digest = await crypto.subtle.digest("SHA-256", pwBuffer);
@@ -50,6 +62,7 @@ export default {
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
 
+        // Lagre ny bruker i databasen
         await db.insert(users).values({
           id: crypto.randomUUID(),
           username,
@@ -69,7 +82,101 @@ export default {
       }
     }
 
-    // Test database
+    // Login
+    if (url.pathname === "/api/login" && request.method === "POST") {
+      try {
+        const { username, password } = (await request.json()) as any;
+        if (!username || !password) {
+          return Response.json({ error: "Mangler brukernavn eller passord" }, { status: 400 });
+        }
+
+        // Hent bruker fra DB
+        const found = await db.select().from(users).where(eq(users.username, username)).all();
+        if (!found || found.length === 0) {
+          return Response.json({ error: "Ugyldig brukernavn eller passord" }, { status: 401 });
+        }
+
+        const user = found[0] as any;
+
+        // Hash innsendt passord
+        const encoder = new TextEncoder();
+        const pwBuffer = encoder.encode(password);
+        const digest = await crypto.subtle.digest("SHA-256", pwBuffer);
+        const hashed = Array.from(new Uint8Array(digest))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        if (hashed !== user.password) {
+          return Response.json({ error: "Ugyldig brukernavn eller passord" }, { status: 401 });
+        }
+
+        // Opprett session-token
+        const token = crypto.randomUUID();
+        await db.insert(sessions).values({ id: crypto.randomUUID(), userId: user.id, token });
+
+        // Cookie for å holde brukeren logget inn
+        const cookie = `session=${token}; Path=/; HttpOnly; SameSite=Lax`;
+        return Response.json({ success: true }, { status: 200, headers: { "Set-Cookie": cookie } });
+      } catch (err) {
+        console.error("Login error:", err);
+        return Response.json({ error: "Innlogging feilet", details: String(err) }, { status: 500 });
+      }
+    }
+
+    // Hent innlogget bruker
+    if (url.pathname === "/api/me" && request.method === "GET") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
+        const token = match ? match[1] : null;
+        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        // Valider session
+        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
+        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
+        const sess = s[0] as any;
+
+        // Hent bruker
+        const u = await db.select().from(users).where(eq(users.id, sess.userId ?? sess.user_id)).all();
+        if (!u || u.length === 0) return Response.json({ error: "Bruker ikke funnet" }, { status: 404 });
+        const user = u[0] as any;
+
+        // Returner brukerobjekt til frontend
+        return Response.json({
+          user: {
+            id: user.id,
+            username: user.username,
+            name: user.username, // frontend bruker name
+            avatarUrl: user.avatar_url ?? user.avatarUrl,
+            status: user.status ?? "offline",
+          },
+        });
+      } catch (err) {
+        console.error("/api/me error:", err);
+        return Response.json({ error: "Kunne ikke hente bruker", details: String(err) }, { status: 500 });
+      }
+    }
+
+    // Logg ut (sletter session-cookie)
+    if (url.pathname === "/api/logout" && request.method === "POST") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
+        const token = match ? match[1] : null;
+
+        if (token) {
+          await db.delete(sessions).where(eq(sessions.token, token));
+        }
+
+        const expired = `session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax`;
+        return Response.json({ success: true }, { status: 200, headers: { "Set-Cookie": expired } });
+      } catch (err) {
+        console.error("Logout-feil:", err);
+        return Response.json({ error: "Kunne ikke logge ut", details: String(err) }, { status: 500 });
+      }
+    }
+
+    // Test databaseforbindelse
     if (url.pathname === "/api/test-db" && request.method === "GET") {
       try {
         const allUsers = await db.select().from(users).all();
@@ -80,7 +187,7 @@ export default {
       }
     }
 
-    // Slett bruker
+    // Slett bruker (kun for test)
     if (url.pathname === "/api/delete-user" && request.method === "DELETE") {
       try {
         const id = url.searchParams.get("id");
@@ -97,29 +204,32 @@ export default {
     }
 
     // ----------------------------------------------------------
-    // 2. FRONTEND (React build i dist/)
+    // 2. FRONTEND (React build fra ASSETS)
     // ----------------------------------------------------------
     try {
-  // Lag en kopi av requesten så den kan brukes trygt
-  const assetReq = new Request(request.url, {
-    method: request.method,
-    headers: request.headers,
-  });
+      // Kopi av requesten slik at den kan brukes på nytt
+      const assetReq = new Request(request.url, {
+        method: request.method,
+        headers: request.headers,
+      });
 
-  let assetResponse = await env.ASSETS.fetch(assetReq);
+      let assetResponse = await env.ASSETS.fetch(assetReq);
 
-  // Hvis fila ikke finnes, send index.html
-  if (assetResponse.status === 404) {
-    const indexReq = new Request(`${url.origin}/index.html`, {
-      method: "GET",
-      headers: request.headers,
-    });
-    assetResponse = await env.ASSETS.fetch(indexReq);
-  }
+      // Hvis fila ikke finnes → server index.html (SPA fallback)
+      if (assetResponse.status === 404) {
+        const indexReq = new Request(`${url.origin}/index.html`, {
+          method: "GET",
+          headers: request.headers,
+        });
+        assetResponse = await env.ASSETS.fetch(indexReq);
+      }
 
-  return assetResponse;
-} catch (err) {
-  console.error("ASSETS fetch error:", err);
-  return new Response("Feil under lasting av frontend", { status: 500 });
-}
-  },};
+      return assetResponse;
+    } catch (err) {
+      console.error("ASSETS fetch error:", err);
+      return new Response("Feil under lasting av frontend", { status: 500 });
+    }
+  },
+};
+
+// Fjernet toppnivå debug-fetch: relative fetch kall ved modul-load kan føre til oppstartsfeil i wrangler.

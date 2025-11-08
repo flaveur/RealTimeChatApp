@@ -4,7 +4,8 @@
 export type Theme = "light" | "dark" | "system";
 
 const THEME_KEY = "app-theme";
-let currentTheme: Theme = "system";
+// Default to light so the app is not dark for users unless they opt in
+let currentTheme: Theme = "light";
 const listeners = new Set<() => void>();
 
 // Initialiser fra localStorage

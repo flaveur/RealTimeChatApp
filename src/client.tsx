@@ -1,5 +1,14 @@
-// ignore missing type declarations for rwsdk/client (runtime expected)
-// @ts-ignore
-import { initClient } from "rwsdk/client";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./main";
+import "./styles.css";
 
-initClient();
+const container = document.getElementById("root");
+if (container) {
+  const root = createRoot(container);
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
+}
