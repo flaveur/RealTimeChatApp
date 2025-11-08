@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [error, setError] = useState("");
@@ -110,12 +111,12 @@ export default function Login() {
 
         <nav className="mt-6 text-center text-sm text-gray-600">
           Har du ikke konto?{" "}
-          <a
-            href="/register"
+          <Link
+            to="/register"
             className="text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-sm"
           >
             Registrer deg
-          </a>
+          </Link>
         </nav>
       </article>
     </main>

@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,7 +31,7 @@ export default function Register() {
         body: JSON.stringify({ username, email, password }),
       });
 
-      const data: any = await res.json().catch(() => null);
+      const data = (await res.json()) as any;
       if (!res.ok) {
         const msg =
           data?.error ||
@@ -38,8 +40,8 @@ export default function Register() {
         throw new Error(msg);
       }
 
-      // Registrering vellykket
-      window.location.href = "/login";
+      // Registrering vellykket - bytt side uten å laste om
+      navigate("/login");
     } catch (err: any) {
       setError(err.message || "Noe gikk galt");
     } finally {
@@ -130,12 +132,12 @@ export default function Register() {
 
         <nav className="mt-6 text-center text-sm text-gray-600">
           Har du allerede konto?{" "}
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="text-blue-600 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-sm"
           >
             Logg inn
-          </a>
+          </Link>
         </nav>
       </article>
     </main>

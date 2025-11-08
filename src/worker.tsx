@@ -1,11 +1,10 @@
-import * as bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { createDB } from "./db/client";
 import { users } from "./db/schema";
 
 export interface Env {
   DB: D1Database;
-  ASSETS: Fetcher; // 
+  ASSETS: Fetcher;
   VERBOSE?: string;
 }
 
@@ -26,9 +25,11 @@ export default {
       return new Response(null, { status: 204 });
     }
 
-    /* =====================================
-       1. API-ruter håndteres først
-    ===================================== */
+    // ----------------------------------------------------------
+    // 1. API-RUTER
+    // ----------------------------------------------------------
+
+    // Registrer ny bruker
     if (url.pathname === "/api/register" && request.method === "POST") {
       try {
         const { username, email, password } = (await request.json()) as RegisterBody;
@@ -42,12 +43,11 @@ export default {
           return Response.json({ error: "E-post er allerede registrert" }, { status: 409 });
         }
 
-        // Hash passordet
         const encoder = new TextEncoder();
         const pwBuffer = encoder.encode(password);
         const digest = await crypto.subtle.digest("SHA-256", pwBuffer);
         const hashed = Array.from(new Uint8Array(digest))
-          .map(b => b.toString(16).padStart(2, "0"))
+          .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
 
         await db.insert(users).values({
@@ -58,7 +58,7 @@ export default {
           status: "offline",
         });
 
-        if (VERBOSE) console.log("✅ Ny bruker registrert:", username);
+        if (VERBOSE) console.log("Ny bruker registrert:", username);
         return Response.json({ success: true }, { status: 201 });
       } catch (err) {
         console.error("Feil under registrering:", err);
@@ -69,6 +69,7 @@ export default {
       }
     }
 
+    // Test database
     if (url.pathname === "/api/test-db" && request.method === "GET") {
       try {
         const allUsers = await db.select().from(users).all();
@@ -79,10 +80,14 @@ export default {
       }
     }
 
+    // Slett bruker
     if (url.pathname === "/api/delete-user" && request.method === "DELETE") {
       try {
         const id = url.searchParams.get("id");
-        if (!id) return Response.json({ error: "Mangler bruker-ID" }, { status: 400 });
+        if (!id) {
+          return Response.json({ error: "Mangler bruker-ID" }, { status: 400 });
+        }
+
         await db.delete(users).where(eq(users.id, id));
         return Response.json({ success: true });
       } catch (err) {
@@ -91,19 +96,30 @@ export default {
       }
     }
 
-    /* =====================================
-       2. Serve React-bygget fra "dist"
-    ===================================== */
+    // ----------------------------------------------------------
+    // 2. FRONTEND (React build i dist/)
+    // ----------------------------------------------------------
     try {
-      const assetResponse = await env.ASSETS.fetch(request);
-      if (assetResponse.status !== 404) return assetResponse;
-    } catch (err) {
-      console.error("ASSETS fetch error:", err);
-    }
+  // Lag en kopi av requesten så den kan brukes trygt
+  const assetReq = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+  });
 
-    // Fallback hvis ingenting matcher
-    return new Response("✅ Worker kjører, men ingen rute matchet", {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+  let assetResponse = await env.ASSETS.fetch(assetReq);
+
+  // Hvis fila ikke finnes, send index.html
+  if (assetResponse.status === 404) {
+    const indexReq = new Request(`${url.origin}/index.html`, {
+      method: "GET",
+      headers: request.headers,
     });
-  },
-};
+    assetResponse = await env.ASSETS.fetch(indexReq);
+  }
+
+  return assetResponse;
+} catch (err) {
+  console.error("ASSETS fetch error:", err);
+  return new Response("Feil under lasting av frontend", { status: 500 });
+}
+  },};
