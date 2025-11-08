@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
 
 export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,7 +37,7 @@ export default function Login() {
       }
 
       // Cookie settes av server, naviger videre
-      window.location.href = "/";
+      navigate("/messages");
     } catch (err: any) {
       setError(err.message || "Noe gikk galt");
     } finally {

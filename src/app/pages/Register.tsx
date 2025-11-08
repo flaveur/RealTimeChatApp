@@ -41,7 +41,7 @@ export default function Register() {
       }
 
       // Registrering vellykket - bytt side uten å laste om
-      navigate("/login");
+      navigate("/messages");
     } catch (err: any) {
       setError(err.message || "Noe gikk galt");
     } finally {
