@@ -1,31 +1,38 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "simple-start",
+  "name": "real-time-chat-app",
   "main": "src/worker.tsx",
   "compatibility_date": "2025-08-29",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
+
+
   "assets": {
     "binding": "ASSETS",
-    "directory": "public"
+    "directory": "dist"
   },
+
+  // Logging & innsikt (kan stå på)
   "observability": {
     "enabled": true
   },
+
+  // Miljøvariabler (kan utvides senere)
   "vars": {},
+
+  // D1-database
   "d1_databases": [
     {
-      "binding": "DB",
-      "database_name": "simple-start",
-      "database_id": "__change_me__",
+      "binding": "DB", // må matche Env.DB i worker.tsx
+      "database_name": "chatapp_db",
+      "database_id": "6011f3e8-53ca-4f18-a0a9-dc4723ab6601", //
       "migrations_dir": "drizzle"
     }
   ],
+
+  //R2 Bucket for bilder/filer
   "r2_buckets": [
     {
       "binding": "R2",
       "bucket_name": "simple-start"
-    },
+    }
   ]
 }

@@ -10,6 +10,10 @@ import { render, route } from "rwsdk/router";
 import { defineApp } from "rwsdk/worker";
 import { setCommonHeaders } from "./app/headers";
 
+import { drizzle } from "drizzle-orm/d1";
+import { desc, eq } from "drizzle-orm";
+import { notes } from "@/db/schema";
+
 export interface Env {
   DB: D1Database;
 }
@@ -40,9 +44,101 @@ function requireAuthMiddleware() {
   };
 }
 
+function apiNotesMiddleware() {
+  return async ({ env, ctx, request }: any) => {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    if (!pathname.startsWith("/api/notes")) return;
+
+    if (!ctx.user) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const db = drizzle(env.DB, { schema: { notes } });
+    const userId = 1; // Mock user ID - i produksjon hent fra ctx.user
+    const method = request.method;
+
+    try {
+      // GET /api/notes - Hent alle notater
+      if (method === "GET" && pathname === "/api/notes") {
+        const rows = await db
+          .select()
+          .from(notes)
+          .where(eq(notes.user_id, userId))
+          .orderBy(desc(notes.updated_at));
+        return new Response(JSON.stringify(rows), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // POST /api/notes - Opprett nytt notat
+      if (method === "POST" && pathname === "/api/notes") {
+        const body = await request.json();
+        await db.insert(notes).values({
+          user_id: userId,
+          title: body.title || "Ny note",
+          body: body.body || "",
+        });
+        const [row] = await db
+          .select()
+          .from(notes)
+          .where(eq(notes.user_id, userId))
+          .orderBy(desc(notes.id))
+          .limit(1);
+        return new Response(JSON.stringify(row), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // PUT /api/notes/:id - Oppdater notat
+      const putMatch = pathname.match(/^\/api\/notes\/(\d+)$/);
+      if (method === "PUT" && putMatch) {
+        const id = Number(putMatch[1]);
+        const body = await request.json();
+        await db
+          .update(notes)
+          .set({
+            title: body.title,
+            body: body.body,
+            updated_at: Date.now(),
+          })
+          .where(eq(notes.id, id));
+        const [row] = await db.select().from(notes).where(eq(notes.id, id));
+        return new Response(JSON.stringify(row), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // DELETE /api/notes/:id - Slett notat
+      const deleteMatch = pathname.match(/^\/api\/notes\/(\d+)$/);
+      if (method === "DELETE" && deleteMatch) {
+        const id = Number(deleteMatch[1]);
+        await db.delete(notes).where(eq(notes.id, id));
+        return new Response(null, { status: 204 });
+      }
+
+      return new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err: any) {
+      console.error("API Error:", err);
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  };
+}
+
 export default defineApp([
   setCommonHeaders(),
   loadUserMiddleware(),
+  apiNotesMiddleware(),
   requireAuthMiddleware(),
   render(Document, [
     route("/", Messages),

@@ -19,3 +19,19 @@ export const messages = sqliteTable("messages", {
   // Use SQLite expression for milliseconds since epoch at insert time
   timestamp: integer("timestamp", { mode: "timestamp_ms" }).default(sql`(unixepoch('now') * 1000)`),
 });
+
+// Notater
+export const notes = sqliteTable("notes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  user_id: integer("user_id").notNull(),
+  title: text("title").notNull().default("Ny note"),
+  body: text("body").notNull().default(""),
+  updated_at: integer("updated_at", { mode: "number" })
+    .notNull()
+    .default(sql`(unixepoch('now') * 1000)`),
+});
+
+// Types
+export type User = typeof users.$inferSelect;
+export type Message = typeof messages.$inferSelect;
+export type Note = typeof notes.$inferSelect;

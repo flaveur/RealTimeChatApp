@@ -1,8 +1,12 @@
 name = "real-time-chat-app"
-main = "src/index.ts"
-compatibility_date = "2025-10-01"
+main = "src/worker.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "chatapp_db"
 database_id = "933cc601-b52d-4886-be7d-27e49d68eb6a"
+
+[vars]
+NODE_ENV = "development"
