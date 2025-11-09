@@ -1,0 +1,108 @@
+{
+  "_Sidebar-DrHSx7sb.js": {
+    "file": "assets/Sidebar-DrHSx7sb.js",
+    "name": "Sidebar",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx",
+      "_compiler-runtime-CQU1REu6.js"
+    ]
+  },
+  "_compiler-runtime-CQU1REu6.js": {
+    "file": "assets/compiler-runtime-CQU1REu6.js",
+    "name": "compiler-runtime",
+    "imports": [
+      "src/client.tsx"
+    ]
+  },
+  "node_modules/.pnpm/rwsdk@1.0.0-beta.22_@cloudf_864802008fbecf7cf9c4fb637356b633/node_modules/rwsdk/dist/runtime/lib/realtime/client.js": {
+    "file": "assets/client-CBGq1TQ0.js",
+    "name": "client",
+    "src": "node_modules/.pnpm/rwsdk@1.0.0-beta.22_@cloudf_864802008fbecf7cf9c4fb637356b633/node_modules/rwsdk/dist/runtime/lib/realtime/client.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx"
+    ],
+    "dynamicImports": [
+      "src/client.tsx"
+    ]
+  },
+  "src/app/pages/Login.tsx": {
+    "file": "assets/Login-DJiUdGyY.js",
+    "name": "Login",
+    "src": "src/app/pages/Login.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx",
+      "_compiler-runtime-CQU1REu6.js"
+    ]
+  },
+  "src/app/pages/Messages.tsx": {
+    "file": "assets/Messages-C6kjt5nO.js",
+    "name": "Messages",
+    "src": "src/app/pages/Messages.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx",
+      "_compiler-runtime-CQU1REu6.js",
+      "_Sidebar-DrHSx7sb.js"
+    ]
+  },
+  "src/app/pages/Register.tsx": {
+    "file": "assets/Register-BXmeMfLA.js",
+    "name": "Register",
+    "src": "src/app/pages/Register.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx",
+      "_compiler-runtime-CQU1REu6.js"
+    ]
+  },
+  "src/app/pages/Settings.tsx": {
+    "file": "assets/Settings-CLbqBWRX.js",
+    "name": "Settings",
+    "src": "src/app/pages/Settings.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx",
+      "_Sidebar-DrHSx7sb.js",
+      "_compiler-runtime-CQU1REu6.js"
+    ]
+  },
+  "src/client.tsx": {
+    "file": "assets/client-B6SI_nAO.js",
+    "name": "client",
+    "src": "src/client.tsx",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "dynamicImports": [
+      "src/components/Notes.tsx",
+      "src/components/Friends.tsx",
+      "_Sidebar-DrHSx7sb.js",
+      "src/app/pages/Messages.tsx",
+      "src/app/pages/Login.tsx",
+      "src/app/pages/Register.tsx",
+      "src/app/pages/Settings.tsx",
+      "node_modules/.pnpm/rwsdk@1.0.0-beta.22_@cloudf_864802008fbecf7cf9c4fb637356b633/node_modules/rwsdk/dist/runtime/lib/realtime/client.js"
+    ]
+  },
+  "src/components/Friends.tsx": {
+    "file": "assets/Friends-BVjM2K5a.js",
+    "name": "Friends",
+    "src": "src/components/Friends.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx",
+      "_compiler-runtime-CQU1REu6.js"
+    ]
+  },
+  "src/components/Notes.tsx": {
+    "file": "assets/Notes-DXXWI8ho.js",
+    "name": "Notes",
+    "src": "src/components/Notes.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/client.tsx"
+    ]
+  }
+}
