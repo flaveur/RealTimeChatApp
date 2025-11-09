@@ -1,6 +1,21 @@
-import { eq } from "drizzle-orm";
+import { eq, or, and } from "drizzle-orm";
 import { createDB } from "./db/client";
-import { sessions, users } from "./db/schema";
+import { sessions, users, friends } from "./db/schema";
+
+// Henter bruker fra session
+async function getUserFromSession(db: any, cookie: string) {
+  const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
+  const token = match ? match[1] : null;
+  if (!token) return null;
+
+  const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
+  if (!s || s.length === 0) return null;
+  const sess = s[0] as any;
+
+  const u = await db.select().from(users).where(eq(users.id, sess.userId ?? sess.user_id)).all();
+  if (!u || u.length === 0) return null;
+  return u[0] as any;
+}
 
 // ----------------------------------------------------------
 // Environment-variabler
@@ -28,6 +43,177 @@ export default {
     // Ignorer Chrome sine devtools-requests
     if (url.pathname === "/favicon.ico" || url.pathname.startsWith("/.well-known")) {
       return new Response(null, { status: 204 });
+    }
+
+    // Søker etter brukere
+    if (url.pathname === "/api/users/search" && request.method === "GET") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const user = await getUserFromSession(db, cookie);
+        if (!user) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const query = url.searchParams.get("q")?.trim().toLowerCase();
+        if (!query) return Response.json({ users: [] });
+
+        const allUsers = await db.select().from(users).all();
+        const results = allUsers
+          .filter((u: any) => {
+            const username = (u.username || "").toLowerCase();
+            return u.id !== user.id && username.includes(query);
+          })
+          .slice(0, 10)
+          .map((u: any) => ({
+            id: u.id,
+            username: u.username,
+            name: u.username,
+            avatarUrl: u.avatar_url ?? u.avatarUrl,
+            status: u.status ?? "offline",
+          }));
+
+        return Response.json({ users: results });
+      } catch (err) {
+        console.error("/api/users/search error:", err);
+        return Response.json({ error: "Søk feilet" }, { status: 500 });
+      }
+    }
+
+    // Send venneforespørselen
+    if (url.pathname === "/api/friends/request" && request.method === "POST") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const user = await getUserFromSession(db, cookie);
+        if (!user) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const { friendId } = (await request.json()) as { friendId: string };
+        if (!friendId) return Response.json({ error: "Mangler friendId" }, { status: 400 });
+        if (friendId === user.id) return Response.json({ error: "Kan ikke legge til deg selv" }, { status: 400 });
+
+        const existing = await db
+          .select()
+          .from(friends)
+          .where(
+            or(
+              and(eq(friends.userId, user.id), eq(friends.friendId, friendId)),
+              and(eq(friends.userId, friendId), eq(friends.friendId, user.id))
+            )
+          )
+          .all();
+
+        if (existing.length > 0) {
+          return Response.json({ error: "Venneforespørsel eksisterer allerede" }, { status: 409 });
+        }
+
+        await db.insert(friends).values({
+          id: crypto.randomUUID(),
+          userId: user.id,
+          friendId: friendId,
+          status: "pending",
+        });
+
+        if (VERBOSE) console.log("Venneforespørsel sendt:", user.id, "->", friendId);
+        return Response.json({ success: true });
+      } catch (err) {
+        console.error("/api/friends/request error:", err);
+        return Response.json({ error: "Kunne ikke sende forespørsel" }, { status: 500 });
+      }
+    }
+
+    // Aksepter venneforespørselen
+    if (url.pathname === "/api/friends/accept" && request.method === "POST") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const user = await getUserFromSession(db, cookie);
+        if (!user) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const { friendshipId } = (await request.json()) as { friendshipId: string };
+        if (!friendshipId) return Response.json({ error: "Mangler friendshipId" }, { status: 400 });
+
+        const friendship = await db.select().from(friends).where(eq(friends.id, friendshipId)).all();
+        if (!friendship || friendship.length === 0) {
+          return Response.json({ error: "Forespørsel ikke funnet" }, { status: 404 });
+        }
+
+        const f = friendship[0] as any;
+        if (f.friendId !== user.id && f.friend_id !== user.id) {
+          return Response.json({ error: "Ikke autorisert" }, { status: 403 });
+        }
+
+        await db.update(friends).set({ status: "accepted" }).where(eq(friends.id, friendshipId));
+
+        if (VERBOSE) console.log("Venneforespørsel akseptert:", friendshipId);
+        return Response.json({ success: true });
+      } catch (err) {
+        console.error("/api/friends/accept error:", err);
+        return Response.json({ error: "Kunne ikke akseptere forespørsel" }, { status: 500 });
+      }
+    }
+
+    // Fjerner venneforespørselen
+    if (url.pathname === "/api/friends/remove" && request.method === "DELETE") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const user = await getUserFromSession(db, cookie);
+        if (!user) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const { friendshipId } = (await request.json()) as { friendshipId: string };
+        if (!friendshipId) return Response.json({ error: "Mangler friendshipId" }, { status: 400 });
+
+        await db.delete(friends).where(eq(friends.id, friendshipId));
+
+        if (VERBOSE) console.log("Vennskap fjernet:", friendshipId);
+        return Response.json({ success: true });
+      } catch (err) {
+        console.error("/api/friends/remove error:", err);
+        return Response.json({ error: "Kunne ikke fjerne venn" }, { status: 500 });
+      }
+    }
+
+    // Henter alle venner
+    if (url.pathname === "/api/friends" && request.method === "GET") {
+      try {
+        const cookie = request.headers.get("cookie") || "";
+        const user = await getUserFromSession(db, cookie);
+        if (!user) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const allFriendships = await db
+          .select()
+          .from(friends)
+          .where(
+            or(
+              eq(friends.userId, user.id),
+              eq(friends.friendId, user.id)
+            )
+          )
+          .all();
+
+        const allUsers = await db.select().from(users).all();
+        const userMap = new Map(allUsers.map((u: any) => [u.id, u]));
+
+        const result = allFriendships.map((f: any) => {
+          const friendUserId = f.userId === user.id ? f.friendId : (f.friend_id === user.id ? f.user_id : f.userId);
+          const friendUser = userMap.get(friendUserId) || userMap.get(f.friendId) || userMap.get(f.friend_id);
+          
+          return {
+            id: f.id,
+            userId: f.userId ?? f.user_id,
+            friendId: f.friendId ?? f.friend_id,
+            status: f.status,
+            createdAt: f.createdAt ?? f.created_at,
+            friend: friendUser ? {
+              id: friendUser.id,
+              username: friendUser.username,
+              name: friendUser.username,
+              avatarUrl: friendUser.avatar_url ?? friendUser.avatarUrl,
+              status: friendUser.status ?? "offline",
+            } : null,
+          };
+        });
+
+        return Response.json({ friends: result });
+      } catch (err) {
+        console.error("/api/friends error:", err);
+        return Response.json({ error: "Kunne ikke hente venner" }, { status: 500 });
+      }
     }
 
     // Oppdater brukernavn (visningsnavn)
