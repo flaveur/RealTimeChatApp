@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Typer
 interface User {
@@ -52,32 +52,120 @@ function Button({
 }
 
 export default function Friends() {
-  const [showAddModal, setShowAddModal] = useState(false);
+  // State
+  const [friends, setFriends] = useState<Friendship[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Midlertidig mock data
-  const friends: Friendship[] = [
-    { 
-      id: "1", 
-      userId: "me", 
-      friendId: "2", 
-      status: "accepted",
-      friend: { id: "2", username: "Shahd", name: "Shahd", status: "online" }
-    },
-    { 
-      id: "3", 
-      userId: "4", 
-      friendId: "me", 
-      status: "pending",
-      friend: { id: "4", username: "Rami", name: "Rami", status: "offline" }
-    },
-  ];
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const searchResults: User[] = [];
+  // Henter venner ved oppstart
+  useEffect(() => {
+    fetchFriends();
+  }, []);
 
+  // Søker etter brukere når query endres
+  useEffect(() => {
+    if (searchQuery.trim().length >= 2) {
+      searchUsers();
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  // Henter alle venner
+  async function fetchFriends() {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/friends");
+      if (!res.ok) throw new Error("Kunne ikke hente venner");
+      const data = await res.json() as { friends: Friendship[] };
+      setFriends(data.friends || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Søker etter brukere
+  async function searchUsers() {
+    try {
+      setSearching(true);
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!res.ok) throw new Error("Søk feilet");
+      const data = await res.json() as { users: User[] };
+      setSearchResults(data.users || []);
+    } catch (err: any) {
+      console.error("Søk feilet:", err);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  // Sender venneforespørsel
+  async function sendFriendRequest(friendId: string) {
+    try {
+      const res = await fetch("/api/friends/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ friendId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        throw new Error(data.error || "Kunne ikke sende forespørsel");
+      }
+
+      setSearchQuery("");
+      setShowAddModal(false);
+      await fetchFriends();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  // Aksepter venneforespørselen
+  async function acceptFriend(friendshipId: string) {
+    try {
+      const res = await fetch("/api/friends/accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ friendshipId }),
+      });
+
+      if (!res.ok) throw new Error("Kunne ikke akseptere forespørsel");
+      await fetchFriends();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  // Fjerner venn
+  async function removeFriend(friendshipId: string) {
+    if (!confirm("Er du sikker på at du vil fjerne denne vennen?")) return;
+
+    try {
+      const res = await fetch("/api/friends/remove", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ friendshipId }),
+      });
+
+      if (!res.ok) throw new Error("Kunne ikke fjerne venn");
+      await fetchFriends();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  // Filtrer venner
   const acceptedFriends = friends.filter((f) => f.status === "accepted");
   const pendingRequests = friends.filter((f) => f.status === "pending");
 
+  // Status-farger og labels
   const statusColors: Record<string, string> = {
     online: "bg-green-500",
     busy: "bg-red-500",
@@ -92,6 +180,14 @@ export default function Friends() {
     offline: "Frakoblet",
   };
 
+  if (loading) {
+    return (
+      <section className="flex items-center justify-center py-12">
+        <p className="text-gray-500 dark:text-gray-400">Laster venner...</p>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-6">
       <header className="flex items-center justify-between">
@@ -103,6 +199,12 @@ export default function Friends() {
         </article>
         <Button onClick={() => setShowAddModal(true)}>+ Legg til venner</Button>
       </header>
+
+      {error && (
+        <aside className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+          {error}
+        </aside>
+      )}
 
       {pendingRequests.length > 0 && (
         <section>
@@ -140,11 +242,11 @@ export default function Friends() {
 
                   <nav className="flex gap-2">
                     {!isPendingFromMe && (
-                      <Button variant="primary" onClick={() => alert("Aksepter")}>
+                      <Button variant="primary" onClick={() => acceptFriend(friendship.id)}>
                         Aksepter
                       </Button>
                     )}
-                    <Button variant="danger" onClick={() => alert("Avvis")}>
+                    <Button variant="danger" onClick={() => removeFriend(friendship.id)}>
                       {isPendingFromMe ? "Avbryt" : "Avvis"}
                     </Button>
                   </nav>
@@ -197,7 +299,7 @@ export default function Friends() {
                   </article>
 
                   <button
-                    onClick={() => alert("Fjern")}
+                    onClick={() => removeFriend(friendship.id)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 dark:text-red-400 text-sm"
                     title="Fjern venn"
                   >
@@ -241,38 +343,59 @@ export default function Friends() {
             </section>
 
             <ul className="space-y-2 max-h-64 overflow-y-auto">
-              {searchResults.length === 0 && searchQuery.trim().length >= 2 && (
+              {searching && (
+                <li className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
+                  Søker...
+                </li>
+              )}
+              
+              {!searching && searchResults.length === 0 && searchQuery.trim().length >= 2 && (
                 <li className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
                   Ingen brukere funnet
                 </li>
               )}
 
-              {searchResults.map((user) => (
-                <li
-                  key={user.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"
-                >
-                  <figure className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
-                    {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="h-full w-full flex items-center justify-center text-white font-bold text-sm">
-                        {user.name[0].toUpperCase()}
+              {!searching && searchResults.map((user) => {
+                const alreadyFriends = friends.some(
+                  (f) => f.friend?.id === user.id
+                );
+
+                return (
+                  <li
+                    key={user.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"
+                  >
+                    <figure className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="h-full w-full flex items-center justify-center text-white font-bold text-sm">
+                          {user.name[0].toUpperCase()}
+                        </span>
+                      )}
+                    </figure>
+
+                    <article className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                        {user.name}
+                      </p>
+                    </article>
+
+                    {alreadyFriends ? (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Allerede venn
                       </span>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        onClick={() => sendFriendRequest(user.id)}
+                      >
+                        Legg til
+                      </Button>
                     )}
-                  </figure>
-
-                  <article className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {user.name}
-                    </p>
-                  </article>
-
-                  <Button variant="primary" onClick={() => alert("Legg til")}>
-                    Legg til
-                  </Button>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </article>
         </aside>
