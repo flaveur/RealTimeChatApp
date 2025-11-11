@@ -1,3 +1,19 @@
+/**
+ * Register.tsx - Registreringsside
+ * 
+ * Implementert med GitHub Copilot
+ * 
+ * Lar nye brukere opprette en konto i systemet. Etter vellykket registrering
+ * vises en suksessmelding, og bruker må eksplisitt logge inn (ikke automatisk innlogging).
+ * Dette forhindrer at gamle sesjoner blir gjenbrukt.
+ * 
+ * Funksjoner:
+ * - Validering av brukernavn, e-post og passord
+ * - API-kall til /api/register
+ * - Viser suksessskjerm med grønt hake-ikon
+ * - Navigerer til /login etter registrering
+ */
+
 'use client';
 
 import { Button } from "@/components/ui/Button";
@@ -5,20 +21,27 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState("");          // Feilmelding ved validering/registrering
+  const [loading, setLoading] = useState(false);   // Loading-state mens API-kall kjører
+  const [success, setSuccess] = useState(false);   // True når registrering er vellykket
+  const navigate = useNavigate();                  // React Router navigasjon
 
+  /**
+   * Håndterer form submit for registrering
+   * Copilot: Validerer input og sender POST til /api/register
+   */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    // Hent form-data og trim whitespace
     const form = new FormData(e.currentTarget);
     const username = (form.get("username") as string)?.trim();
     const email = (form.get("email") as string)?.trim();
     const password = (form.get("password") as string)?.trim();
 
+    // Frontend-validering
     if (!username || !email || !password) {
       setError("Vennligst fyll ut alle felt");
       setLoading(false);
@@ -26,6 +49,7 @@ export default function Register() {
     }
 
     try {
+      // Send registrerings-request til backend
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -35,12 +59,43 @@ export default function Register() {
       const data = (await res.json()) as any;
       if (!res.ok) throw new Error(data?.error ?? "Kunne ikke registrere bruker");
 
-      navigate("/messages", { state: { flash: "Registrering vellykket!" } });
+      // Vis suksessmelding i stedet for å logge inn automatisk
+      // Copilot: Dette forhindrer at gamle sesjoner gjenbrukes
+      setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Noe gikk galt under registrering");
     } finally {
       setLoading(false);
     }
+  }
+
+  // Suksessskjerm: Vises etter vellykket registrering
+  // Copilot: Bruker må eksplisitt navigere til login-siden
+  if (success) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors">
+        <article className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-800 text-center">
+          <div className="mb-6">
+            {/* Grønt hake-ikon */}
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Registrering vellykket!
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Din konto er opprettet. Du kan nå logge inn.
+            </p>
+          </div>
+          
+          <Button onClick={() => navigate("/login")} fullWidth>
+            Gå til innlogging
+          </Button>
+        </article>
+      </main>
+    );
   }
 
   return (

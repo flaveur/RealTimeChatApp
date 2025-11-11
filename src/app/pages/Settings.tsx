@@ -6,29 +6,38 @@ import AppLayout from "@/components/ui/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
+/*Settings-siden gir brukeren kontroll over profil, status, tema, varsler og konto.
+  Mobile: Stablede seksjoner, full bredde-knapper, større touch-områder (p-4 md:p-6)
+  Desktop: Side-ved-side layout, kompakte knapper (w-full sm:w-auto)
+ */
 export default function Settings() {
+  //Hent innlogget bruker fra rwsdk (reaktivt via useCurrentUser)
   const me = rwsdk.auth.useCurrentUser?.() ?? null;
   const [name, setName] = useState(me?.name ?? "");
+  //useSyncExternalStore synkroniserer tema-state med localStorage via theme.ts
   const theme = useSyncExternalStore(subscribe, getTheme, () => "system");
   
-  // Varsler state
+  //Varsler state: Lagre brukerpreferanser for notifikasjoner i localStorage
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem("notifications.sound");
-    return saved !== null ? saved === "true" : true;
+    return saved !== null ? saved === "true" : true; // Standard: lyd på
   });
   const [desktopEnabled, setDesktopEnabled] = useState(() => {
     const saved = localStorage.getItem("notifications.desktop");
-    return saved !== null ? saved === "true" : false;
+    return saved !== null ? saved === "true" : false; // Standard: desktop-varsler av
   });
   const [mentionsOnly, setMentionsOnly] = useState(() => {
     const saved = localStorage.getItem("notifications.mentionsOnly");
-    return saved !== null ? saved === "true" : false;
+    return saved !== null ? saved === "true" : false; // Standard: alle varsler, ikke bare mentions
   });
 
+  //Synkroniser navn-state med innlogget bruker når brukerdata oppdateres
   useEffect(() => {
     setName(me?.name ?? "");
   }, [me?.name]);
 
+  //Lagre varsel-preferanser til localStorage når de endres
+  //Copilot forklarer: useEffect oppdaterer localStorage automatisk når state endres
   useEffect(() => {
     localStorage.setItem("notifications.sound", String(soundEnabled));
   }, [soundEnabled]);
@@ -43,6 +52,15 @@ export default function Settings() {
 
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+  
+  /*Lagre brukerens visningsnavn til databasen
+   * 
+   Dette er implementert med Copilot.
+   Validerer at navnet er minst 2 tegn langt
+   Sender PUT /api/me/name via rwsdk.auth.updateName()
+   Viser feilmelding hvis API returnerer error
+   rwsdk notifiserer automatisk andre komponenter om oppdatert brukernavn
+   */
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setNameError(null);
@@ -60,6 +78,12 @@ export default function Settings() {
     }
   }
 
+  /*
+    handleLogout: Logger ut brukeren og sender til login-siden
+   Sender POST /api/logout som sletter session-cookie og setter status til "offline"
+   Redirecter til /login (via window.location.href for full page refresh)
+   finally-blokk sikrer redirect selv om API feiler
+   */
   async function handleLogout() {
     try {
       await fetch("/api/logout", { method: "POST" });
@@ -70,15 +94,15 @@ export default function Settings() {
 
   return (
     <AppLayout title="Innstillinger">
-      <section className="space-y-6">
+      <section className="space-y-4 md:space-y-6 pb-4 md:pb-0">
 
         {/* PROFIL */}
         <article
           aria-labelledby="profil"
-          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+          className="rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 md:p-6 shadow-sm"
         >
           <header className="mb-4">
-            <h2 id="profil" className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 id="profil" className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
               Profil
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -86,7 +110,7 @@ export default function Settings() {
             </p>
           </header>
 
-          <form onSubmit={handleSave} className="space-y-4 max-w-sm">
+          <form onSubmit={handleSave} className="space-y-4">
             <fieldset>
               <legend className="sr-only">Brukernavn</legend>
               <label
@@ -102,8 +126,8 @@ export default function Settings() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Skriv navnet ditt"
                 className="mt-1 w-full rounded-xl border border-gray-300 dark:border-gray-600 
-                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 
-                           focus:ring-2 focus:ring-blue-500 outline-none"
+                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-3
+                           focus:ring-2 focus:ring-blue-500 outline-none text-base"
               />
               {nameError && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{nameError}</p>
@@ -113,7 +137,7 @@ export default function Settings() {
             <AvatarUploader />
 
             <footer>
-              <Button type="submit" disabled={savingName}>
+              <Button type="submit" disabled={savingName} className="w-full sm:w-auto">
                 {savingName ? "Lagrer..." : "Lagre navn"}
               </Button>
             </footer>
@@ -123,10 +147,10 @@ export default function Settings() {
         {/* STATUS */}
         <article
           aria-labelledby="status"
-          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+          className="rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 md:p-6 shadow-sm"
         >
           <header className="mb-4">
-            <h2 id="status" className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 id="status" className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
               Status
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -140,10 +164,10 @@ export default function Settings() {
         {/* TEMA */}
         <article
           aria-labelledby="theme"
-          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+          className="rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 md:p-6 shadow-sm"
         >
           <header className="mb-4">
-            <h2 id="theme" className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 id="theme" className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
               Utseende
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -151,7 +175,7 @@ export default function Settings() {
             </p>
           </header>
 
-          <div className="space-y-3 max-w-md">
+          <div className="space-y-3">
             {(["light", "dark", "system"] as Theme[]).map((t) => {
               const labels = { light: "Lyst", dark: "Mørkt", system: "System" };
               const descriptions = {
@@ -162,7 +186,7 @@ export default function Settings() {
               return (
                 <label
                   key={t}
-                  className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition ${
+                  className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 cursor-pointer transition ${
                     theme === t
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/30"
@@ -176,7 +200,7 @@ export default function Settings() {
                     onChange={() => setTheme(t)}
                     className="sr-only"
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{labels[t]}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{descriptions[t]}</p>
                   </div>
@@ -194,10 +218,10 @@ export default function Settings() {
         {/* VARSLER */}
         <article
           aria-labelledby="notifications"
-          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+          className="rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 md:p-6 shadow-sm"
         >
           <header className="mb-4">
-            <h2 id="notifications" className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 id="notifications" className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
               Varsler
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -205,10 +229,10 @@ export default function Settings() {
             </p>
           </header>
 
-          <div className="space-y-3 max-w-md">
+          <div className="space-y-3">
             {/* Lydvarsler */}
             <label
-              className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition ${
+              className={`flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 cursor-pointer transition ${
                 soundEnabled
                   ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
                   : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/30"
@@ -242,7 +266,7 @@ export default function Settings() {
 
             {/* Desktop-varsler */}
             <label
-              className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition ${
+              className={`flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 cursor-pointer transition ${
                 desktopEnabled
                   ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
                   : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/30"
@@ -276,7 +300,7 @@ export default function Settings() {
 
             {/* Kun ved mentions */}
             <label
-              className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition ${
+              className={`flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 cursor-pointer transition ${
                 mentionsOnly
                   ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
                   : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/30"
@@ -313,10 +337,10 @@ export default function Settings() {
         {/* KONTO */}
         <article
           aria-labelledby="account"
-          className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+          className="rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 md:p-6 shadow-sm"
         >
           <header className="mb-4">
-            <h2 id="account" className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 id="account" className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
               Konto
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -325,7 +349,7 @@ export default function Settings() {
           </header>
 
           <footer>
-            <Button variant="danger" onClick={handleLogout}>
+            <Button variant="danger" onClick={handleLogout} className="w-full sm:w-auto">
               Logg ut
             </Button>
           </footer>
@@ -335,18 +359,27 @@ export default function Settings() {
   );
 }
 
-/* STATUS-KOMPONENT */
+/**
+  UserStatusEditable: Lar brukeren velge sin tilgjengelighetsstatus
+   Viser tre radio-knapper: online (grønn), busy (rød), away (gul)
+   Sender POST /api/me/status via rwsdk.auth.setStatus() når bruker endrer valg
+   Lytter til onChange-events fra rwsdk for å oppdatere UI når status endres eksternt
+  (f.eks. automatisk "away" fra useActivityMonitor eller "offline" ved logout)
+  currentStatus vises med blå border og checkmark-ikon
+ */
 function UserStatusEditable() {
   const [user, setUser] = useState(() => rwsdk.auth.useCurrentUser());
   
-  // Lytt til endringer i brukerdata
+  // Lytt til endringer i brukerdata via rwsdk.auth.onChange
+  // Copilot forklarer: Dette holder komponenten synkronisert med status-endringer fra andre kilder
   useEffect(() => {
     const unsub = rwsdk.auth.onChange(() => {
       setUser(rwsdk.auth.useCurrentUser());
     });
-    return unsub;
+    return unsub; // Cleanup: fjern listener ved unmount
   }, []);
 
+  // Sender ny status til backend via rwsdk.auth.setStatus()
   const handleStatusChange = (newStatus: "online" | "busy" | "away") => {
     rwsdk.auth.setStatus(newStatus);
   };
@@ -360,11 +393,11 @@ function UserStatusEditable() {
   ];
 
   return (
-    <div className="space-y-3 max-w-md">
+    <div className="space-y-3">
       {statusOptions.map(({ value, label, color, description }) => (
         <label
           key={value}
-          className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition ${
+          className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 cursor-pointer transition ${
             currentStatus === value
               ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
               : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800/30"
@@ -394,7 +427,17 @@ function UserStatusEditable() {
   );
 }
 
-/* AVATAR-OPPLASTER */
+/*
+AvatarUploader komponent er implementer med Copilot.
+ AvatarUploader: Komponent for å laste opp profilbilde til R2storage
+ Copilot forklarer:
+ * - Viser nåværende avatar (fra me.avatarUrl) eller preview av valgt fil
+ * - onSelect: Validerer at fil er bilde og under 2MB, viser preview med URL.createObjectURL
+ * - onUpload: Sender fil til POST /api/me/avatar via rwsdk.auth.updateAvatar()
+ * - Backend lagrer bildet i R2 bucket og oppdaterer users.avatarUrl i database
+ * - rwsdk.notify oppdaterer automatisk me.avatarUrl, som får preview til å fjernes
+ * - useMemo kombinerer preview (lokal) og me.avatarUrl (server) for å vise riktig bilde
+ */
 function AvatarUploader() {
   const me = rwsdk.auth.useCurrentUser?.() ?? null;
   const [preview, setPreview] = useState<string | null>(null);
@@ -402,12 +445,17 @@ function AvatarUploader() {
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  // Fjern preview når avatarUrl oppdateres fra server
   useEffect(() => {
     setPreview(null);
   }, [me?.avatarUrl]);
 
+  // Vis preview hvis fil er valgt, ellers vis lagret avatarUrl
   const current = useMemo(() => preview ?? me?.avatarUrl ?? null, [preview, me?.avatarUrl]);
 
+  /* onSelect: Validerer valgt fil og viser lokal preview
+     URL.createObjectURL lager en temporary URL for å vise bildet før opplasting
+   */
   async function onSelect(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
     const f = e.target.files?.[0];
@@ -424,6 +472,15 @@ function AvatarUploader() {
     setPreview(url);
   }
 
+  /*
+  
+  onUpload: Laster opp bildet til R2 via rwsdk.auth.updateAvatar()
+
+  Sender multipart/form-data til POST /api/me/avatar
+   Backend lagrer fil i R2 med filnavn: avatars/{userId}-{timestamp}.{ext}
+   Oppdaterer users.avatarUrl i database til /api/avatar/{userId}
+   rwsdk.notify trigger re-render av alle komponenter som bruker me.avatarUrl
+   */
   async function onUpload() {
     const file = fileRef.current?.files?.[0];
     if (!file) return;
@@ -435,7 +492,7 @@ function AvatarUploader() {
       setError(res.error ?? "Kunne ikke laste opp avatar");
       return;
     }
-    // clear preview since avatarUrl is now set via rwsdk.notify
+    // Fjern preview siden avatarUrl nå er satt via rwsdk.notify
     setPreview(null);
     if (fileRef.current) fileRef.current.value = "";
   }

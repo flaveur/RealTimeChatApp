@@ -11,6 +11,7 @@ export const users = sqliteTable("users", {
   status: text("status").default("offline"),       // "online" / "offline"
   bio: text("bio"),                                // Kort beskrivelse (valgfritt)
   avatarUrl: text("avatar_url"),                   // Lenke til profilbilde (valgfritt)
+  settings: text("settings"),                      // JSON-string med brukerinnstillinger
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
 });
 
@@ -22,7 +23,7 @@ export const messages = sqliteTable("messages", {
   senderId: text("sender_id").notNull(),           // Hvem som sendte
   receiverId: text("receiver_id").notNull(),       // Hvem som mottok (privat melding)
   content: text("content").notNull(),              // Meldingsinnhold
-  chatId: text("chat_id"),                         // (valgfritt) for gruppekontroll
+  friendshipId: text("friendship_id"),             // Kobling til vennskapet (for threads)
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
   editedAt: text("edited_at"),                     // hvis meldingen er redigert
 });

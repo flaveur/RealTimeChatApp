@@ -1,3 +1,22 @@
+/**
+ * Messages.tsx - Chat/Meldinger side
+ * 
+ * Implementert med GitHub Copilot
+ * 
+ * Hovedside for chat-funksjonalitet med tråder (samtaler) og meldinger.
+ * Viser liste over venner (aksepterte vennskap) og lar brukere sende meldinger.
+ * 
+ * Responsive design:
+ * - Desktop: Trådliste til venstre, meldinger til høyre (side-by-side)
+ * - Mobil: Full-skjerm visning av enten trådliste ELLER meldinger
+ *   - Tilbake-knapp for å gå fra chat tilbake til trådliste
+ * 
+ * Funksjoner:
+ * - Real-time oppdatering av meldinger via rwsdk
+ * - Profilbilder i trådliste og meldingsbobler
+ * - Automatisk scrolling til nye meldinger
+ */
+
 'use client';
 
 import { rwsdk, type RWMessage, type RWThread } from "@/app/lib/rwsdk";
@@ -6,13 +25,14 @@ import { Button } from "@/components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 
 export default function MessagesPage() {
-  const [threads, setThreads] = useState<RWThread[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<RWMessage[]>([]);
-  const [me, setMe] = useState(() => rwsdk.auth.useCurrentUser());
-  const [text, setText] = useState("");
+  const [threads, setThreads] = useState<RWThread[]>([]);      // Liste over samtaler (venner)
+  const [activeId, setActiveId] = useState<string | null>(null);  // Aktiv samtale-ID
+  const [messages, setMessages] = useState<RWMessage[]>([]);   // Meldinger i aktiv samtale
+  const [me, setMe] = useState(() => rwsdk.auth.useCurrentUser());  // Innlogget bruker
+  const [text, setText] = useState("");                        // Input-felt for ny melding
 
-  // Hent tråder
+  //Hent tråder (samtaler) ved første lasting
+  //Copilot: Setter automatisk første tråd som aktiv hvis ingen er valgt
   useEffect(() => {
     rwsdk.chat.listThreads().then((t) => {
       setThreads(t);
@@ -20,19 +40,25 @@ export default function MessagesPage() {
     });
   }, []);
 
-  // Oppdater brukerdata
+  //Oppdater brukerdata når den endres
+  //Copilot: Viktig for å vise riktig avatar og status
   useEffect(() => {
     const unsub = rwsdk.auth.onChange(() => setMe(rwsdk.auth.useCurrentUser()));
     return unsub;
   }, []);
 
-  // Lytt på meldinger i aktiv tråd
+  //Lytt på meldinger i aktiv tråd (real-time updates)
+  //Copilot: rwsdk.chat.subscribe returnerer en unsubscribe-funksjon
   useEffect(() => {
     if (!activeId) return;
     const unsub = rwsdk.chat.subscribe(activeId, setMessages);
-    return unsub;
+    return unsub;  // Cleanup ved unmount eller når activeId endres
   }, [activeId]);
 
+  /**
+  Sender ny melding til aktiv samtale
+  Copilot: Tømmer input-feltet etter sending
+   */
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!activeId || !text.trim()) return;
@@ -40,6 +66,7 @@ export default function MessagesPage() {
     setText("");
   }
 
+  // Beregn tittel for aktiv samtale (vennens navn)
   const activeTitle = useMemo(
     () => threads.find((t) => t.id === activeId)?.title ?? "",
     [threads, activeId]
@@ -47,10 +74,14 @@ export default function MessagesPage() {
 
   return (
     <AppLayout title="Meldinger">
-      <section className="flex h-[80vh] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
-        {/* Trådliste */}
-        <aside className="w-64 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-y-auto">
-          <header className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      {/* Hovedcontainer: Flex-col på mobil, flex-row på desktop */}
+      <section className="flex flex-col md:flex-row h-[calc(100vh-12rem)] md:h-[80vh] rounded-xl md:rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+        
+        {/* Trådliste sidebar 
+            Copilot responsive: Skjules på mobil når en samtale er aktiv (viser chat i stedet)
+        */}
+        <aside className={`${activeId && threads.length > 0 ? 'hidden md:block' : 'block'} w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-y-auto`}>
+          <header className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
               Samtaler
             </h2>
@@ -66,11 +97,19 @@ export default function MessagesPage() {
                       : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-300"
                   }`}
                 >
-                  <figure
-                    className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600"
-                    aria-hidden
-                  />
-                  <figcaption className="min-w-0">
+                  {/* Profilbilde eller initialer 
+                      Copilot: avatarUrl kommer fra /api/threads med vennens profilbilde
+                  */}
+                  <figure className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
+                    {t.avatarUrl ? (
+                      <img src={t.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="h-full w-full flex items-center justify-center text-white font-bold text-sm">
+                        {t.title[0]?.toUpperCase() || "?"}
+                      </span>
+                    )}
+                  </figure>
+                  <figcaption className="min-w-0 flex-1">
                     <p className="truncate font-medium">{t.title}</p>
                     <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                       {t.lastMessage ?? "Ingen meldinger"}
@@ -82,49 +121,67 @@ export default function MessagesPage() {
           </ul>
         </aside>
 
-        {/* Meldinger */}
-        <article className="flex flex-1 flex-col bg-white dark:bg-gray-900">
-          <header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {activeTitle || "Samtale"}
-            </h2>
-          </header>
+        {/* Meldinger - Full bredde på mobil */}
+        <article className={`${!activeId && threads.length > 0 ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-white dark:bg-gray-900`}>
+          {activeId ? (
+            <>
+              <header className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center gap-3">
+                {/* Tilbake-knapp på mobil */}
+                <button
+                  onClick={() => setActiveId(null)}
+                  className="md:hidden p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+                  aria-label="Tilbake til samtaler"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
+                  {activeTitle || "Samtale"}
+                </h2>
+              </header>
 
-          <section
-            aria-live="polite"
-            className="flex-1 overflow-y-auto px-6 py-4 space-y-3"
-          >
-            {messages.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                Ingen meldinger ennå.
-              </p>
-            ) : (
-              messages.map((m) => (
-                <MessageBubble key={m.id} message={m} selfId={me?.id ?? ""} />
-              ))
-            )}
-          </section>
+              <section
+                aria-live="polite"
+                className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3"
+              >
+                {messages.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    Ingen meldinger ennå.
+                  </p>
+                ) : (
+                  messages.map((m) => (
+                    <MessageBubble key={m.id} message={m} selfId={me?.id ?? ""} />
+                  ))
+                )}
+              </section>
 
-          <footer className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-            <form onSubmit={sendMessage} className="flex items-end gap-3">
-              <label htmlFor="message" className="sr-only">
-                Melding
-              </label>
-              <textarea
-                id="message"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Skriv en melding..."
-                rows={2}
-                className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-600
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2
-                           focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-              <Button type="submit" disabled={!text.trim()}>
-                Send
-              </Button>
-            </form>
-          </footer>
+              <footer className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 md:p-4">
+                <form onSubmit={sendMessage} className="flex items-end gap-2 md:gap-3">
+                  <label htmlFor="message" className="sr-only">
+                    Melding
+                  </label>
+                  <textarea
+                    id="message"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Skriv en melding..."
+                    rows={1}
+                    className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-600
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 md:px-4 py-2
+                               focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base"
+                  />
+                  <Button type="submit" disabled={!text.trim()}>
+                    Send
+                  </Button>
+                </form>
+              </footer>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+              <p className="text-sm md:text-base">Velg en samtale for å starte</p>
+            </div>
+          )}
         </article>
       </section>
     </AppLayout>
@@ -133,8 +190,22 @@ export default function MessagesPage() {
 
 function MessageBubble({ message, selfId }: { message: RWMessage; selfId: string }) {
   const mine = message.authorId === selfId;
+  
   return (
-    <article className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+    <article className={`flex gap-2 items-end ${mine ? "justify-end" : "justify-start"}`}>
+      {/* Profilbilde for andre (vises på venstre side) */}
+      {!mine && (
+        <figure className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
+          {message.authorAvatar ? (
+            <img src={message.authorAvatar} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="h-full w-full flex items-center justify-center text-white font-bold text-xs">
+              {message.authorName?.[0]?.toUpperCase() || "?"}
+            </span>
+          )}
+        </figure>
+      )}
+
       <section
         className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm leading-relaxed ${
           mine
@@ -142,6 +213,11 @@ function MessageBubble({ message, selfId }: { message: RWMessage; selfId: string
             : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         }`}
       >
+        {!mine && message.authorName && (
+          <p className="text-xs font-semibold mb-1 opacity-70">
+            {message.authorName}
+          </p>
+        )}
         <p>{message.text}</p>
         <time
           dateTime={message.createdAt}
@@ -153,6 +229,13 @@ function MessageBubble({ message, selfId }: { message: RWMessage; selfId: string
           })}
         </time>
       </section>
+
+      {/* Profilbilde for egen bruker (vises på høyre side) */}
+      {mine && message.authorAvatar && (
+        <figure className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
+          <img src={message.authorAvatar} alt="" className="h-full w-full object-cover" />
+        </figure>
+      )}
     </article>
   );
 }

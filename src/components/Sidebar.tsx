@@ -50,9 +50,9 @@ export default function Sidebar() {
   const userStatus = user?.status ?? "offline";
 
   return (
-    <nav className="flex flex-col gap-6">
-      {/* Profilkort */}
-      <header className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
+    <nav className="flex flex-col gap-4 md:gap-6">
+      {/* Profilkort - Kun desktop */}
+      <header className="hidden md:block rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
         <div className="flex items-center gap-3 mb-3">
           <figure className="relative h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center select-none flex-shrink-0">
             {user?.avatarUrl ? (
@@ -91,21 +91,22 @@ export default function Sidebar() {
         </Link>
       </header>
 
-      {/* Navigasjon */}
-      <ul className="space-y-1">{items.map(({ label, icon: Icon, href }) => {
+      {/* Navigasjon - Horisontal på mobil, vertikal på desktop */}
+      <ul className="flex md:flex-col justify-around md:justify-start md:space-y-1">
+        {items.map(({ label, icon: Icon, href }) => {
           const active = location.pathname === href;
           return (
-            <li key={href}>
+            <li key={href} className="flex-1 md:flex-none">
               <Link
                 to={href}
-                className={`flex items-center gap-3 px-4 py-2 rounded-lg transition ${
+                className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-4 py-2 md:py-2 rounded-lg transition ${
                   active
                     ? "bg-blue-600 text-white dark:bg-blue-600"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span>{label}</span>
+                <Icon className="w-5 h-5 md:w-5 md:h-5" />
+                <span className="text-xs md:text-base">{label}</span>
               </Link>
             </li>
           );

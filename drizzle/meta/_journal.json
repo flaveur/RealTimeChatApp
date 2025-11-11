@@ -36,6 +36,13 @@
       "when": 1762581510261,
       "tag": "0004_slippery_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1762888214823,
+      "tag": "0005_closed_komodo",
+      "breakpoints": true
     }
   ]
 }

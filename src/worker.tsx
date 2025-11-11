@@ -1,22 +1,57 @@
-import { eq } from "drizzle-orm";
+// Backend API for chat app
+import { eq, or, and, desc } from "drizzle-orm";
 import { createDB } from "./db/client";
-import { sessions, users } from "./db/schema";
+import { sessions, users, friends, messages, notes } from "./db/schema";
 
-// ----------------------------------------------------------
-// Environment-variabler
-// ----------------------------------------------------------
 export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
-  R2?: R2Bucket; // R2 bucket for avatar
+  R2?: R2Bucket;
   VERBOSE?: string;
 }
 
-// Body for /api/register
 interface RegisterBody {
   username: string;
   email: string;
   password: string;
+}
+
+// Helper: autentiser bruker fra cookie
+async function authenticateUser(request: Request, db: any): Promise<{ userId: string } | null> {
+  const cookie = request.headers.get("cookie") || "";
+  const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
+  const token = match ? match[1] : null;
+  if (!token) return null;
+
+  const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
+  if (!s || s.length === 0) return null;
+  
+  const sess = s[0] as any;
+  return { userId: sess.userId ?? sess.user_id };
+}
+
+// Helper: hash passord
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const pwBuffer = encoder.encode(password);
+  const digest = await crypto.subtle.digest("SHA-256", pwBuffer);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// Helper: hent bruker-data
+async function getUserData(db: any, userId: string) {
+  const u = await db.select().from(users).where(eq(users.id, userId)).all();
+  if (!u || u.length === 0) return null;
+  const user = u[0] as any;
+  return {
+    id: user.id,
+    username: user.username,
+    name: user.username,
+    avatarUrl: user.avatar_url ?? user.avatarUrl,
+    status: user.status ?? "offline",
+  };
 }
 
 export default {
@@ -25,56 +60,40 @@ export default {
     const db = createDB(env);
     const VERBOSE = env.VERBOSE === "true";
 
-    // Ignorer Chrome sine devtools-requests
     if (url.pathname === "/favicon.ico" || url.pathname.startsWith("/.well-known")) {
       return new Response(null, { status: 204 });
     }
 
-    // Oppdater brukernavn (visningsnavn)
+
+
+    // Update user name
     if (url.pathname === "/api/me/name" && request.method === "POST") {
       try {
-        const cookie = request.headers.get("cookie") || "";
-        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
-        const token = match ? match[1] : null;
-        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
-
-        // Valider session
-        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
-        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
-        const sess = s[0] as any;
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
         const { name } = (await request.json()) as { name?: string };
         const next = (name ?? "").trim();
-        if (!next) return Response.json({ error: "Navn kan ikke være tomt" }, { status: 400 });
-        if (next.length < 2) return Response.json({ error: "Navn må være minst 2 tegn" }, { status: 400 });
+        if (!next || next.length < 2) {
+          return Response.json({ error: "Navn må være minst 2 tegn" }, { status: 400 });
+        }
 
-        // Sjekk at brukernavn ikke er tatt av andre
         const existing = await db.select().from(users).where(eq(users.username, next)).all();
-        if (existing.some((u: any) => (u.id ?? u.ID) !== (sess.userId ?? sess.user_id))) {
+        if (existing.some((u: any) => (u.id ?? u.ID) !== auth.userId)) {
           return Response.json({ error: "Brukernavnet er allerede tatt" }, { status: 409 });
         }
 
-        await db.update(users).set({ username: next }).where(eq(users.id, sess.userId ?? sess.user_id));
-
+        await db.update(users).set({ username: next }).where(eq(users.id, auth.userId));
         return Response.json({ success: true, name: next });
       } catch (err) {
-        console.error("/api/me/name error:", err);
-        return Response.json({ error: "Kunne ikke oppdatere navn", details: String(err) }, { status: 500 });
+        return Response.json({ error: "Kunne ikke oppdatere navn" }, { status: 500 });
       }
     }
-
-    // Last opp/oppdater avatar-bilde
+    // avatar opplastning
     if (url.pathname === "/api/me/avatar" && request.method === "POST") {
       try {
-        const cookie = request.headers.get("cookie") || "";
-        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
-        const token = match ? match[1] : null;
-        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
-
-        // Valider session
-        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
-        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
-        const sess = s[0] as any;
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
         const form = await request.formData();
         const file = form.get("avatar");
@@ -88,83 +107,62 @@ export default {
           return Response.json({ error: "Bildet er for stort (maks 2MB)" }, { status: 413 });
         }
 
-        const userId = sess.userId ?? sess.user_id;
-        const key = `avatars/${userId}`;
+        const key = `avatars/${auth.userId}`;
 
         if (env.R2) {
-          // Last opp til R2 med riktig content-type
           await env.R2.put(key, (file as File).stream(), { httpMetadata: { contentType: ct } });
-          const urlPath = `/api/avatar/${userId}?v=${Date.now()}`; // cache-busting
-          await db.update(users).set({ avatarUrl: urlPath }).where(eq(users.id, userId));
+          const urlPath = `/api/avatar/${auth.userId}?v=${Date.now()}`;
+          await db.update(users).set({ avatarUrl: urlPath }).where(eq(users.id, auth.userId));
           return Response.json({ success: true, avatarUrl: urlPath });
         } else {
-          // Fallback: lagre som data-URL direkte i DB (kun dev-fallback)
           const arrayBuffer = await (file as File).arrayBuffer();
           const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
           const dataUrl = `data:${ct};base64,${base64}`;
-          await db.update(users).set({ avatarUrl: dataUrl }).where(eq(users.id, userId));
+          await db.update(users).set({ avatarUrl: dataUrl }).where(eq(users.id, auth.userId));
           return Response.json({ success: true, avatarUrl: dataUrl });
         }
       } catch (err) {
-        console.error("/api/me/avatar error:", err);
-        return Response.json({ error: "Kunne ikke oppdatere avatar", details: String(err) }, { status: 500 });
+        return Response.json({ error: "Kunne ikke oppdatere avatar" }, { status: 500 });
       }
     }
 
-    // Hent avatar fra R2
+    // hente avatar fra r2
     if (url.pathname.startsWith("/api/avatar/") && request.method === "GET") {
       try {
         const userId = url.pathname.split("/api/avatar/")[1];
-        if (!userId) return new Response("Not found", { status: 404 });
-        if (!env.R2) return new Response("R2 ikke konfigurert", { status: 501 });
-        const key = `avatars/${userId}`;
-        const obj = await env.R2.get(key);
+        if (!userId || !env.R2) return new Response("Not found", { status: 404 });
+        
+        const obj = await env.R2.get(`avatars/${userId}`);
         if (!obj) return new Response("Not found", { status: 404 });
+        
         const headers = new Headers();
-        const ct = obj.httpMetadata?.contentType || "application/octet-stream";
-        headers.set("Content-Type", ct);
+        headers.set("Content-Type", obj.httpMetadata?.contentType || "application/octet-stream");
         headers.set("Cache-Control", "public, max-age=3600");
         return new Response(obj.body, { status: 200, headers });
       } catch (err) {
-        console.error("/api/avatar error:", err);
         return new Response("Internal error", { status: 500 });
       }
     }
 
-    // ----------------------------------------------------------
-    // 1. API-RUTER
-    // ----------------------------------------------------------
-
-    // Registrer ny bruker
+    // register ny bruker
     if (url.pathname === "/api/register" && request.method === "POST") {
       try {
         const { username, email, password } = (await request.json()) as RegisterBody;
-
         if (!username || !email || !password) {
           return Response.json({ error: "Alle felt må fylles ut" }, { status: 400 });
         }
 
-        // Sjekk at e-posten ikke finnes
         const existingEmail = await db.select().from(users).where(eq(users.email, email)).all();
         if (existingEmail.length > 0) {
           return Response.json({ error: "E-post er allerede registrert" }, { status: 409 });
         }
 
-        // Sjekk at brukernavn ikke finnes
         const existingUsername = await db.select().from(users).where(eq(users.username, username)).all();
         if (existingUsername.length > 0) {
           return Response.json({ error: "Brukernavnet er allerede tatt" }, { status: 409 });
         }
 
-        // Hash passord med SHA-256
-        const encoder = new TextEncoder();
-        const pwBuffer = encoder.encode(password);
-        const digest = await crypto.subtle.digest("SHA-256", pwBuffer);
-        const hashed = Array.from(new Uint8Array(digest))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-
-        // Lagre ny bruker i databasen
+        const hashed = await hashPassword(password);
         await db.insert(users).values({
           id: crypto.randomUUID(),
           username,
@@ -176,15 +174,11 @@ export default {
         if (VERBOSE) console.log("Ny bruker registrert:", username);
         return Response.json({ success: true }, { status: 201 });
       } catch (err) {
-        console.error("Feil under registrering:", err);
-        return Response.json(
-          { error: "Brukernavn eller e-post er allerede i bruk", details: String(err) },
-          { status: 500 }
-        );
+        return Response.json({ error: "Brukernavn eller e-post er allerede i bruk" }, { status: 500 });
       }
     }
 
-    // Login
+    // login
     if (url.pathname === "/api/login" && request.method === "POST") {
       try {
         const { username, password } = (await request.json()) as any;
@@ -192,104 +186,63 @@ export default {
           return Response.json({ error: "Mangler brukernavn eller passord" }, { status: 400 });
         }
 
-        // Hent bruker fra DB
         const found = await db.select().from(users).where(eq(users.username, username)).all();
         if (!found || found.length === 0) {
           return Response.json({ error: "Ugyldig brukernavn eller passord" }, { status: 401 });
         }
 
         const user = found[0] as any;
-
-        // Hash innsendt passord
-        const encoder = new TextEncoder();
-        const pwBuffer = encoder.encode(password);
-        const digest = await crypto.subtle.digest("SHA-256", pwBuffer);
-        const hashed = Array.from(new Uint8Array(digest))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
+        const hashed = await hashPassword(password);
 
         if (hashed !== user.password) {
           return Response.json({ error: "Ugyldig brukernavn eller passord" }, { status: 401 });
         }
 
-        // Opprett session-token
         const token = crypto.randomUUID();
         await db.insert(sessions).values({ id: crypto.randomUUID(), userId: user.id, token });
 
-        // Cookie for å holde brukeren logget inn
         const cookie = `session=${token}; Path=/; HttpOnly; SameSite=Lax`;
         return Response.json({ success: true }, { status: 200, headers: { "Set-Cookie": cookie } });
       } catch (err) {
-        console.error("Login error:", err);
-        return Response.json({ error: "Innlogging feilet", details: String(err) }, { status: 500 });
+        return Response.json({ error: "Innlogging feilet" }, { status: 500 });
       }
     }
 
-    // Hent innlogget bruker
+    // gå inn nåværende bruker
     if (url.pathname === "/api/me" && request.method === "GET") {
       try {
-        const cookie = request.headers.get("cookie") || "";
-        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
-        const token = match ? match[1] : null;
-        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
-        // Valider session
-        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
-        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
-        const sess = s[0] as any;
+        const user = await getUserData(db, auth.userId);
+        if (!user) return Response.json({ error: "Bruker ikke funnet" }, { status: 404 });
 
-        // Hent bruker
-        const u = await db.select().from(users).where(eq(users.id, sess.userId ?? sess.user_id)).all();
-        if (!u || u.length === 0) return Response.json({ error: "Bruker ikke funnet" }, { status: 404 });
-        const user = u[0] as any;
-
-        // Returner brukerobjekt til frontend
-        return Response.json({
-          user: {
-            id: user.id,
-            username: user.username,
-            name: user.username, // frontend bruker name
-            avatarUrl: user.avatar_url ?? user.avatarUrl,
-            status: user.status ?? "offline",
-          },
-        });
+        return Response.json({ user });
       } catch (err) {
-        console.error("/api/me error:", err);
-        return Response.json({ error: "Kunne ikke hente bruker", details: String(err) }, { status: 500 });
+        return Response.json({ error: "Kunne ikke hente bruker" }, { status: 500 });
       }
     }
 
-    // Oppdater brukerstatus
+    // update status
     if (url.pathname === "/api/me/status" && request.method === "POST") {
       try {
-        const cookie = request.headers.get("cookie") || "";
-        const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
-        const token = match ? match[1] : null;
-        if (!token) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
-        // Valider session
-        const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
-        if (!s || s.length === 0) return Response.json({ error: "Ugyldig session" }, { status: 401 });
-        const sess = s[0] as any;
-
-        // Les status fra body
         const { status } = (await request.json()) as { status: "online" | "busy" | "away" };
         if (!status || !["online", "busy", "away"].includes(status)) {
           return Response.json({ error: "Ugyldig status" }, { status: 400 });
         }
 
-        // Oppdater status i database
-        await db.update(users).set({ status }).where(eq(users.id, sess.userId ?? sess.user_id));
-
-        if (VERBOSE) console.log("Status oppdatert:", sess.userId ?? sess.user_id, "->", status);
+        await db.update(users).set({ status }).where(eq(users.id, auth.userId));
+        if (VERBOSE) console.log("Status oppdatert:", auth.userId, "->", status);
         return Response.json({ success: true, status });
       } catch (err) {
-        console.error("/api/me/status error:", err);
-        return Response.json({ error: "Kunne ikke oppdatere status", details: String(err) }, { status: 500 });
+        return Response.json({ error: "Kunne ikke oppdatere status" }, { status: 500 });
       }
     }
 
-    // Logg ut (sletter session-cookie)
+    // logge ut
     if (url.pathname === "/api/logout" && request.method === "POST") {
       try {
         const cookie = request.headers.get("cookie") || "";
@@ -297,18 +250,386 @@ export default {
         const token = match ? match[1] : null;
 
         if (token) {
+          const s = await db.select().from(sessions).where(eq(sessions.token, token)).all();
+          if (s && s.length > 0) {
+            const sess = s[0] as any;
+            await db.update(users).set({ status: "offline" }).where(eq(users.id, sess.userId ?? sess.user_id));
+          }
           await db.delete(sessions).where(eq(sessions.token, token));
         }
 
         const expired = `session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax`;
         return Response.json({ success: true }, { status: 200, headers: { "Set-Cookie": expired } });
       } catch (err) {
-        console.error("Logout-feil:", err);
-        return Response.json({ error: "Kunne ikke logge ut", details: String(err) }, { status: 500 });
+        return Response.json({ error: "Kunne ikke logge ut" }, { status: 500 });
       }
     }
 
-    // Test databaseforbindelse
+
+    // hente venner
+    if (url.pathname === "/api/friends" && request.method === "GET") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const allFriendships = await db
+          .select()
+          .from(friends)
+          .where(or(eq(friends.userId, auth.userId), eq(friends.friendId, auth.userId)))
+          .all();
+
+        const friendships = await Promise.all(
+          allFriendships.map(async (f: any) => {
+            const friendId = f.userId === auth.userId ? f.friendId : f.userId;
+            const friend = await getUserData(db, friendId);
+            return { ...f, friend };
+          })
+        );
+
+        return Response.json({ friends: friendships });
+      } catch (err) {
+        return Response.json({ error: "Kunne ikke hente venner" }, { status: 500 });
+      }
+    }
+
+    // søke etter brukere
+    if (url.pathname === "/api/users/search" && request.method === "GET") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const query = url.searchParams.get("q") || "";
+        if (query.length < 2) return Response.json({ users: [] });
+
+        const allUsers = await db.select().from(users).all();
+        const results = allUsers.filter(
+          (u: any) => u.username.toLowerCase().includes(query.toLowerCase()) && u.id !== auth.userId
+        );
+
+        const usersData = results.map((u: any) => ({
+          id: u.id,
+          username: u.username,
+          name: u.username,
+          avatarUrl: u.avatar_url ?? u.avatarUrl,
+          status: u.status ?? "offline",
+        }));
+
+        return Response.json({ users: usersData });
+      } catch (err) {
+        return Response.json({ error: "Søk feilet" }, { status: 500 });
+      }
+    }
+
+    // sende venneforespørsel
+    if (url.pathname === "/api/friends/request" && request.method === "POST") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const { friendId } = (await request.json()) as { friendId: string };
+        if (!friendId) return Response.json({ error: "Mangler friendId" }, { status: 400 });
+
+        const existing = await db
+          .select()
+          .from(friends)
+          .where(
+            or(
+              and(eq(friends.userId, auth.userId), eq(friends.friendId, friendId)),
+              and(eq(friends.userId, friendId), eq(friends.friendId, auth.userId))
+            )
+          )
+          .all();
+
+        if (existing.length > 0) {
+          return Response.json({ error: "Venneforespørsel eksisterer allerede" }, { status: 409 });
+        }
+
+        await db.insert(friends).values({
+          id: crypto.randomUUID(),
+          userId: auth.userId,
+          friendId,
+          status: "pending",
+        });
+
+        return Response.json({ success: true });
+      } catch (err) {
+        return Response.json({ error: "Kunne ikke sende forespørsel" }, { status: 500 });
+      }
+    }
+
+    // akseptere venneforespørsel
+    if (url.pathname === "/api/friends/accept" && request.method === "POST") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const { friendshipId } = (await request.json()) as { friendshipId: string };
+        if (!friendshipId) return Response.json({ error: "Mangler friendshipId" }, { status: 400 });
+
+        await db.update(friends).set({ status: "accepted" }).where(eq(friends.id, friendshipId));
+        return Response.json({ success: true });
+      } catch (err) {
+        return Response.json({ error: "Kunne ikke akseptere forespørsel" }, { status: 500 });
+      }
+    }
+
+    // fjerne venn
+    if (url.pathname === "/api/friends/remove" && request.method === "DELETE") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const { friendshipId } = (await request.json()) as { friendshipId: string };
+        if (!friendshipId) return Response.json({ error: "Mangler friendshipId" }, { status: 400 });
+
+        await db.delete(friends).where(eq(friends.id, friendshipId));
+        return Response.json({ success: true });
+      } catch (err) {
+        return Response.json({ error: "Kunne ikke fjerne venn" }, { status: 500 });
+      }
+    }
+
+
+    // hente inn notater
+    if (url.pathname === "/api/notes" && request.method === "GET") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const userNotes = await db
+          .select()
+          .from(notes)
+          .where(eq(notes.userId, auth.userId))
+          .orderBy(desc(notes.createdAt))
+          .all();
+
+        return Response.json({ notes: userNotes });
+      } catch (err) {
+        return Response.json({ error: "Kunne ikke hente notater" }, { status: 500 });
+      }
+    }
+
+    // lage notater
+    if (url.pathname === "/api/notes" && request.method === "POST") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const { title, content } = (await request.json()) as { title: string; content?: string };
+        if (!title || !title.trim()) {
+          return Response.json({ error: "Tittel er påkrevd" }, { status: 400 });
+        }
+
+        const newNote = {
+          id: crypto.randomUUID(),
+          userId: auth.userId,
+          title: title.trim(),
+          content: content?.trim() || "",
+          createdAt: new Date().toISOString(),
+        };
+
+        await db.insert(notes).values(newNote);
+        return Response.json({ note: newNote }, { status: 201 });
+      } catch (err) {
+        return Response.json({ error: "Kunne ikke opprette notat" }, { status: 500 });
+      }
+    }
+
+    // oppdatere/slette notater (PUT/DELETE)
+    if (url.pathname.startsWith("/api/notes/")) {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const noteId = url.pathname.split("/api/notes/")[1];
+        if (!noteId) return Response.json({ error: "Mangler notat-ID" }, { status: 400 });
+
+        const existing = await db.select().from(notes).where(eq(notes.id, noteId)).all();
+        if (!existing || existing.length === 0) {
+          return Response.json({ error: "Notat ikke funnet" }, { status: 404 });
+        }
+        const note = existing[0] as any;
+        if (note.userId !== auth.userId) {
+          return Response.json({ error: "Ikke autorisert" }, { status: 403 });
+        }
+
+        if (request.method === "PUT") {
+          const { title, content } = (await request.json()) as { title?: string; content?: string };
+          await db
+            .update(notes)
+            .set({
+              title: title?.trim() || note.title,
+              content: content?.trim() || note.content,
+              updatedAt: new Date().toISOString(),
+            })
+            .where(eq(notes.id, noteId));
+          return Response.json({ success: true });
+        }
+
+        if (request.method === "DELETE") {
+          await db.delete(notes).where(eq(notes.id, noteId));
+          return Response.json({ success: true });
+        }
+      } catch (err) {
+        return Response.json({ error: "Notat-operasjon feilet" }, { status: 500 });
+      }
+    }
+
+
+    // hente threads (chat-tråder)
+    if (url.pathname === "/api/threads" && request.method === "GET") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const acceptedFriends = await db
+          .select()
+          .from(friends)
+          .where(
+            and(
+              or(eq(friends.userId, auth.userId), eq(friends.friendId, auth.userId)),
+              eq(friends.status, "accepted")
+            )
+          )
+          .all();
+
+        const threads = await Promise.all(
+          acceptedFriends.map(async (f: any) => {
+            const friendId = f.userId === auth.userId ? f.friendId : f.userId;
+            const friend = await getUserData(db, friendId);
+
+            const lastMsg = await db
+              .select()
+              .from(messages)
+              .where(
+                or(
+                  and(eq(messages.senderId, auth.userId), eq(messages.receiverId, friendId)),
+                  and(eq(messages.senderId, friendId), eq(messages.receiverId, auth.userId))
+                )
+              )
+              .orderBy(desc(messages.createdAt))
+              .limit(1)
+              .all();
+
+            return {
+              id: f.id,
+              title: friend?.username || "Ukjent",
+              lastMessage: lastMsg[0]?.content || null,
+              avatarUrl: friend?.avatarUrl,
+            };
+          })
+        );
+
+        return Response.json({ threads });
+      } catch (err) {
+        return Response.json({ error: "Kunne ikke hente tråder" }, { status: 500 });
+      }
+    }
+
+    // hente/sende meldinger
+    if (url.pathname === "/api/messages") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        const threadId = url.searchParams.get("threadId");
+        if (!threadId) return Response.json({ error: "Mangler threadId" }, { status: 400 });
+
+        const friendship = await db.select().from(friends).where(eq(friends.id, threadId)).all();
+        if (!friendship || friendship.length === 0) {
+          return Response.json({ error: "Tråd ikke funnet" }, { status: 404 });
+        }
+        const f = friendship[0] as any;
+        const friendId = f.userId === auth.userId ? f.friendId : f.userId;
+
+        if (request.method === "GET") {
+          const msgs = await db
+            .select()
+            .from(messages)
+            .where(
+              or(
+                and(eq(messages.senderId, auth.userId), eq(messages.receiverId, friendId)),
+                and(eq(messages.senderId, friendId), eq(messages.receiverId, auth.userId))
+              )
+            )
+            .orderBy(messages.createdAt)
+            .all();
+
+          const [currentUser, friendUser] = await Promise.all([
+            getUserData(db, auth.userId),
+            getUserData(db, friendId),
+          ]);
+
+          const userMap: Record<string, any> = {
+            [auth.userId]: currentUser,
+            [friendId]: friendUser,
+          };
+
+          const formattedMessages = msgs.map((m: any) => {
+            const author = userMap[m.senderId];
+            return {
+              id: m.id,
+              authorId: m.senderId,
+              text: m.content,
+              createdAt: m.createdAt,
+              authorName: author?.username || "Ukjent",
+              authorAvatar: author?.avatarUrl,
+            };
+          });
+
+          return Response.json({ messages: formattedMessages });
+        }
+
+        if (request.method === "POST") {
+          const { text } = (await request.json()) as { text: string };
+          if (!text?.trim()) return Response.json({ error: "Mangler text" }, { status: 400 });
+
+          const newMessage = {
+            id: crypto.randomUUID(),
+            senderId: auth.userId,
+            receiverId: friendId,
+            content: text.trim(),
+            friendshipId: threadId,
+            createdAt: new Date().toISOString(),
+          };
+
+          await db.insert(messages).values(newMessage);
+          return Response.json({ success: true, message: newMessage }, { status: 201 });
+        }
+      } catch (err) {
+        return Response.json({ error: "Melding-operasjon feilet" }, { status: 500 });
+      }
+    }
+
+
+    // hente/oppdatere innstillinger
+    if (url.pathname === "/api/me/settings") {
+      try {
+        const auth = await authenticateUser(request, db);
+        if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+
+        if (request.method === "GET") {
+          const u = await db.select().from(users).where(eq(users.id, auth.userId)).all();
+          if (!u || u.length === 0) return Response.json({ error: "Bruker ikke funnet" }, { status: 404 });
+          const user = u[0] as any;
+          const settings = user.settings ? JSON.parse(user.settings) : {};
+          return Response.json({ settings });
+        }
+
+        if (request.method === "PUT") {
+          const newSettings = (await request.json()) as any;
+          await db
+            .update(users)
+            .set({ settings: JSON.stringify(newSettings) })
+            .where(eq(users.id, auth.userId));
+          return Response.json({ success: true, settings: newSettings });
+        }
+      } catch (err) {
+        return Response.json({ error: "Innstillinger-operasjon feilet" }, { status: 500 });
+      }
+    }
+
+    // Test database
     if (url.pathname === "/api/test-db" && request.method === "GET") {
       try {
         const allUsers = await db.select().from(users).all();
@@ -319,7 +640,7 @@ export default {
       }
     }
 
-    // Slett bruker (kun for test)
+    // Delete user (for testing)
     if (url.pathname === "/api/delete-user" && request.method === "DELETE") {
       try {
         const id = url.searchParams.get("id");
@@ -335,33 +656,54 @@ export default {
       }
     }
 
-    // ----------------------------------------------------------
-    // 2. FRONTEND (React build fra ASSETS)
-    // ----------------------------------------------------------
-    try {
-      // Kopi av requesten slik at den kan brukes på nytt
-      const assetReq = new Request(request.url, {
-        method: request.method,
-        headers: request.headers,
-      });
+    // Serve frontend files
+    if (request.method === "GET") {
+      try {
+        let assetResponse = await env.ASSETS.fetch(request);
 
-      let assetResponse = await env.ASSETS.fetch(assetReq);
+        if (assetResponse.status === 404) {
+          const indexReq = new Request(`${url.origin}/index.html`, {
+            method: "GET",
+            headers: request.headers,
+          });
+          assetResponse = await env.ASSETS.fetch(indexReq);
+        }
 
-      // Hvis fila ikke finnes → server index.html (SPA fallback)
-      if (assetResponse.status === 404) {
-        const indexReq = new Request(`${url.origin}/index.html`, {
-          method: "GET",
-          headers: request.headers,
-        });
-        assetResponse = await env.ASSETS.fetch(indexReq);
+        if (assetResponse.status === 200) {
+          const newHeaders = new Headers(assetResponse.headers);
+          
+          if (url.pathname.endsWith('.js')) {
+            newHeaders.set('Content-Type', 'application/javascript; charset=utf-8');
+          } else if (url.pathname.endsWith('.css')) {
+            newHeaders.set('Content-Type', 'text/css; charset=utf-8');
+          } else if (url.pathname.endsWith('.html')) {
+            newHeaders.set('Content-Type', 'text/html; charset=utf-8');
+          } else if (url.pathname.endsWith('.json')) {
+            newHeaders.set('Content-Type', 'application/json; charset=utf-8');
+          } else if (url.pathname.endsWith('.png')) {
+            newHeaders.set('Content-Type', 'image/png');
+          } else if (url.pathname.endsWith('.jpg') || url.pathname.endsWith('.jpeg')) {
+            newHeaders.set('Content-Type', 'image/jpeg');
+          } else if (url.pathname.endsWith('.svg')) {
+            newHeaders.set('Content-Type', 'image/svg+xml');
+          } else if (url.pathname.endsWith('.ico')) {
+            newHeaders.set('Content-Type', 'image/x-icon');
+          }
+
+          return new Response(assetResponse.body, {
+            status: assetResponse.status,
+            statusText: assetResponse.statusText,
+            headers: newHeaders,
+          });
+        }
+
+        return assetResponse;
+      } catch (err) {
+        console.error("ASSETS fetch error:", err);
+        return new Response("Feil under lasting av frontend", { status: 500 });
       }
-
-      return assetResponse;
-    } catch (err) {
-      console.error("ASSETS fetch error:", err);
-      return new Response("Feil under lasting av frontend", { status: 500 });
     }
+
+    return new Response("Not found", { status: 404 });
   },
 };
-
-// Fjernet toppnivå debug-fetch: relative fetch kall ved modul-load kan føre til oppstartsfeil i wrangler.
