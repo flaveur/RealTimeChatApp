@@ -275,7 +275,7 @@ export default function Friends() {
               return (
                 <li
                   key={friendship.id}
-                  className="flex items-center gap-3 p-3 md:p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition group"
+                  className="group flex items-center gap-3 p-3 md:p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 group"
                 >
                   <figure className="relative h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
                     {friendship.friend.avatarUrl ? (
