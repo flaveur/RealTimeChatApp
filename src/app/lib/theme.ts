@@ -31,6 +31,7 @@ export function setTheme(theme: Theme): void {
 
 export function applyTheme(): void {
   if (typeof window === "undefined") return;
+   document.documentElement.style.transition = "background-color 1s ease, color 1s ease";
 
   const theme = getTheme();
   const isDark =
