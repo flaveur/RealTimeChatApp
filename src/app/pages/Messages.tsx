@@ -100,14 +100,16 @@ export default function MessagesPage() {
                   {/* Profilbilde eller initialer 
                       Copilot: avatarUrl kommer fra /api/threads med vennens profilbilde
                   */}
-                  <figure className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
-                    {t.avatarUrl ? (
-                      <img src={t.avatarUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="h-full w-full flex items-center justify-center text-white font-bold text-sm">
-                        {t.title[0]?.toUpperCase() || "?"}
-                      </span>
-                    )}
+                  <figure className="h-10 w-10 flex-shrink-0">
+                    <span className="block h-full w-full rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden flex items-center justify-center">
+                      {t.avatarUrl ? (
+                        <img src={t.avatarUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="h-full w-full flex items-center justify-center text-white font-bold text-sm">
+                          {t.title[0]?.toUpperCase() || "?"}
+                        </span>
+                      )}
+                    </span>
                   </figure>
                   <figcaption className="min-w-0 flex-1">
                     <p className="truncate font-medium">{t.title}</p>

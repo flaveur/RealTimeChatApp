@@ -277,17 +277,20 @@ export default function Friends() {
                   key={friendship.id}
                   className="group flex items-center gap-3 p-3 md:p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 group"
                 >
-                  <figure className="relative h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
-                    {friendship.friend.avatarUrl ? (
-                      <img src={friendship.friend.avatarUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="h-full w-full flex items-center justify-center text-white font-bold">
-                        {friendship.friend.name[0].toUpperCase()}
-                      </span>
-                    )}
+                  <figure className="relative h-12 w-12 flex-shrink-0">
+                    <span className="block h-full w-full rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden flex items-center justify-center">
+                      {friendship.friend.avatarUrl ? (
+                        <img src={friendship.friend.avatarUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="h-full w-full flex items-center justify-center text-white font-bold">
+                          {friendship.friend.name[0].toUpperCase()}
+                        </span>
+                      )}
+                    </span>
                     <span
-                      className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800 ${statusColors[friendship.friend.status]}`}
+                      className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-800 shadow-sm ${statusColors[friendship.friend.status]}`}
                       title={statusLabels[friendship.friend.status]}
+                      aria-label={statusLabels[friendship.friend.status]}
                     />
                   </figure>
 
