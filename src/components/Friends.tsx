@@ -361,9 +361,12 @@ export default function Friends() {
               )}
 
               {!searching && searchResults.map((user) => {
-                const alreadyFriends = friends.some(
+                const friendshipStatus = friends.find(
                   (f) => f.friend?.id === user.id
                 );
+  
+                const isPending = friendshipStatus?.status === "pending";
+                const isAccepted = friendshipStatus?.status === "accepted";
 
                 return (
                   <li
@@ -386,9 +389,13 @@ export default function Friends() {
                       </p>
                     </article>
 
-                    {alreadyFriends ? (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {isAccepted ? (
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
                         Allerede venn
+                      </span>
+                    ) : isPending ? (
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                        Ventende forespørsel
                       </span>
                     ) : (
                       <Button
