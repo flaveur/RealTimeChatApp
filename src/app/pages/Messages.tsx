@@ -167,11 +167,17 @@ export default function MessagesPage() {
                     id="message"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage(e as any);
+                      }
+                    }}
                     placeholder="Skriv en melding..."
                     rows={1}
                     className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-600
-                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 md:px-4 py-2
-                               focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base"
+                              bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 md:px-4 py-2
+                              focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base"
                   />
                   <Button type="submit" disabled={!text.trim()}>
                     Send
