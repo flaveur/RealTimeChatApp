@@ -22,7 +22,7 @@
 import { rwsdk, type RWMessage, type RWThread } from "@/app/lib/rwsdk";
 import AppLayout from "@/components/ui/AppLayout";
 import { Button } from "@/components/ui/Button";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 
 export default function MessagesPage() {
   const [threads, setThreads] = useState<RWThread[]>([]);      // Liste over samtaler (venner)
@@ -30,6 +30,14 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<RWMessage[]>([]);   // Meldinger i aktiv samtale
   const [me, setMe] = useState(() => rwsdk.auth.useCurrentUser());  // Innlogget bruker
   const [text, setText] = useState("");                        // Input-felt for ny melding
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [text]);
 
   //Hent tråder (samtaler) ved første lasting
   //Copilot: Setter automatisk første tråd som aktiv hvis ingen er valgt
@@ -164,6 +172,7 @@ export default function MessagesPage() {
                     Melding
                   </label>
                   <textarea
+                    ref={textareaRef}
                     id="message"
                     value={text}
                     onChange={(e) => setText(e.target.value)}
@@ -175,6 +184,7 @@ export default function MessagesPage() {
                     }}
                     placeholder="Skriv en melding..."
                     rows={1}
+                    style={{ minHeight: '44px', maxHeight: '200px', overflowY: 'auto' }}
                     className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-600
                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 md:px-4 py-2
                               focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base"
