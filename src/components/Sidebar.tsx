@@ -54,24 +54,26 @@ export default function Sidebar() {
       {/* Profilkort - Kun desktop */}
       <header className="hidden md:block rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
         <div className="flex items-center gap-3 mb-3">
-          <figure className="relative h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center select-none flex-shrink-0">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt={`${user.name}'s avatar`}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
-            ) : (
-              <span className="text-sm font-bold text-white">
-                {getInitials(user?.name)}
-              </span>
-            )}
+          <figure className="relative h-12 w-12 flex-shrink-0">
+            <span className="block h-full w-full rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center select-none">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={`${user.name}'s avatar`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <span className="text-sm font-bold text-white">
+                  {getInitials(user?.name)}
+                </span>
+              )}
+            </span>
             <span
               title={statusLabel[userStatus]}
-              className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-gray-50 dark:border-gray-800 ${statusColor[userStatus]}`}
+              className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-gray-50 dark:border-gray-800 ${statusColor[userStatus]}`}
             />
           </figure>
           <div className="min-w-0 flex-1">

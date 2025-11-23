@@ -112,10 +112,10 @@ export const rwsdk = {
       return () => { mounted = false; };
     },
     async send(threadId: string, text: string) {
-      await fetch("/api/messages", { 
+      await fetch(`/api/messages?threadId=${encodeURIComponent(threadId)}`, { 
         method: "POST", 
         headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ threadId, text }) 
+        body: JSON.stringify({ text }) 
       });
     }
   }
