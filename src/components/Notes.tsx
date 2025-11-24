@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface Note {
@@ -18,11 +18,19 @@ export default function Notes() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Hent notater ved oppstart
   useEffect(() => {
     fetchNotes();
   }, []);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [newNote]);
 
   async function fetchNotes() {
     try {
@@ -131,12 +139,14 @@ export default function Notes() {
             Nytt notat
           </label>
           <textarea
+            ref={textareaRef}
             id="newNote"
             placeholder="Skriv et nytt notat..."
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             rows={3}
             maxLength={500}
+            style={{ minHeight: '80px', maxHeight: '300px', overflowY: 'auto' }}
             className="w-full resize-none px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 
                       focus:ring-2 focus:ring-blue-500 outline-none text-base"
