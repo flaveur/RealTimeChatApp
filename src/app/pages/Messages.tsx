@@ -85,9 +85,6 @@ export default function MessagesPage() {
       {/* Hovedcontainer: Flex-col på mobil, flex-row på desktop */}
       <section className="flex flex-col md:flex-row h-[calc(100vh-12rem)] md:h-[80vh] rounded-xl md:rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
         
-        {/* Trådliste sidebar 
-            Copilot responsive: Skjules på mobil når en samtale er aktiv (viser chat i stedet)
-        */}
         <aside className={`${activeId && threads.length > 0 ? 'hidden md:block' : 'block'} w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-y-auto`}>
           <header className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
