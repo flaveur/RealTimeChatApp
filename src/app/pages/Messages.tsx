@@ -95,7 +95,17 @@ export default function MessagesPage() {
             </h2>
           </header>
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {threads.map((t) => (
+            {threads.length === 0 ? (
+              <li className="px-4 py-8 text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+                  Ingen samtaler enda
+                </p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs">
+                  Legg til venner for å starte en chat
+                </p>
+              </li>
+            ) : (
+              threads.map((t) => (
               <li key={t.id}>
                 <button
                   onClick={() => setActiveId(t.id)}
@@ -127,7 +137,8 @@ export default function MessagesPage() {
                   </figcaption>
                 </button>
               </li>
-            ))}
+            ))
+            )}
           </ul>
         </aside>
 
