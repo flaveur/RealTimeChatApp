@@ -4,7 +4,6 @@
   "compatibility_date": "2025-08-29",
   "compatibility_flags": ["nodejs_compat"],
 
-
   "assets": {
     "binding": "ASSETS",
     "directory": "dist"
@@ -21,7 +20,7 @@
   // D1-database
   "d1_databases": [
     {
-      "binding": "DB", // må matche Env.DB i worker.tsx
+      "binding": "DB",
       "database_name": "chatapp_db",
       "database_id": "6011f3e8-53ca-4f18-a0a9-dc4723ab6601", //
       "migrations_dir": "drizzle"

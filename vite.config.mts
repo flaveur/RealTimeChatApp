@@ -1,7 +1,7 @@
-import { defineConfig } from "vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
-import { redwood } from "rwsdk/vite";
 import tailwindcss from "@tailwindcss/vite";
+import { redwood } from "rwsdk/vite";
+import { defineConfig } from "vite";
 
 import { fileURLToPath, URL } from "node:url";
 
@@ -20,6 +20,9 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 5173,
     open: true,
+    watch: {
+      ignored: ["**/.wrangler/**"],
+    },
   },
 
   resolve: {

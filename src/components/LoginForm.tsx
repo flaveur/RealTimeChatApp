@@ -1,11 +1,10 @@
-// src/app/pages/Login.tsx
-
+// src/components/LoginForm.tsx
 "use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 
-export default function Login() {
+export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -109,7 +108,7 @@ export default function Login() {
         <nav className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           Har du ikke konto?{" "}
           <a
-            href="/auth/register"
+            href="/register"
             className="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
           >
             Registrer deg

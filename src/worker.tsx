@@ -1,32 +1,33 @@
-// src/worker.tsx
-
 import { Document } from "@/app/Document";
-import { setCommonHeaders } from "@/app/headers";
-import { setupDb, type DB } from "@/db";
 import { prefix, render, route } from "rwsdk/router";
 import { defineApp } from "rwsdk/worker";
 
-import { runSeed } from "@/db/seed"; // <-- add this
-import { AuthContext } from "better-auth";
+import { setCommonHeaders } from "@/app/headers";
+import { setupDb, type DB } from "@/db";
+
+import type { AuthContext } from "better-auth";
 import { env } from "cloudflare:workers";
+import { authenticationMiddleware } from "./app/middleware/authentication";
+
 import { authService } from "./app/api/auth/authService";
 import { LoginDTOSchema, RegisterDTOSchema } from "./app/lib/schema/auth-dtos";
-import { authenticationMiddleware } from "./app/middleware/authentication";
-import { Home } from "./app/pages/Home";
-import LoginPage from "./app/pages/LoginPage";
-import MessagesPage from "./app/pages/MessagesPage";
-import Register from "./app/pages/Register";
 import { Errors } from "./app/types/errors";
 import {
   createCookieResponse,
   createErrorResponse,
 } from "./app/types/response";
 
+import HomePage from "./app/pages/HomePage";
+import LoginPage from "./app/pages/LoginPage";
+import MessagesPage from "./app/pages/MessagesPage";
+import RegisterPage from "./app/pages/RegisterPage";
+import { seedDatabase } from "./db/seed";
+
 export interface Env {
   DB: D1Database;
 }
 
-// Expands context to have authcontext
+// Extends context with DB + auth
 export type AppContext = {
   db: DB;
 } & AuthContext;
@@ -34,30 +35,16 @@ export type AppContext = {
 export default defineApp([
   setCommonHeaders(),
 
-  // Database setup middleware
   async function setup({ ctx }) {
     ctx.db = await setupDb(env.DB);
   },
 
-  authenticationMiddleware,
+  route("/dev/seed", async () => {
+    const result = await seedDatabase(env);
+    return Response.json(result);
+  }),
 
-  // DEV: seed route
-  prefix("/api/dev", [
-    route("/seed", async () => {
-      try {
-        const users = await runSeed(env.DB);
-        return Response.json({ success: true, count: users.length, users });
-      } catch (err) {
-        console.error("Seed error:", err);
-        return Response.json(
-          { success: false, error: "Seeding failed" },
-          { status: 500 }
-        );
-      }
-    }),
-  ]),
-
-  // Auth routes
+  // Dere kan lage en sånn routes fil som inneholder mye av logikken under her. Det kommer til å være mange funksjoner sikkert så fint å holde det enda mer organisert.,
   prefix("/api/v1/auth", [
     route("/login", async (ctx) => {
       try {
@@ -73,6 +60,7 @@ export default defineApp([
         }
 
         const credentials = parsed.data;
+
         const result = await authService.login(credentials);
 
         if (!result.success) {
@@ -113,8 +101,8 @@ export default defineApp([
     route("/register", async (ctx) => {
       try {
         const body = await ctx.request.json();
-        const parsedData = RegisterDTOSchema.safeParse(body);
 
+        const parsedData = RegisterDTOSchema.safeParse(body);
         if (!parsedData.success) {
           return createErrorResponse(
             Errors.VALIDATION_ERROR,
@@ -124,7 +112,6 @@ export default defineApp([
         }
 
         const { username, email, password } = parsedData.data;
-
         const result = await authService.register({
           username,
           email,
@@ -151,13 +138,14 @@ export default defineApp([
     }),
   ]),
 
-  // UI routes
+  authenticationMiddleware,
+  // Legg til sånn autentisering her som sjekker om du har session før du kan være inn i visse pages som f.eks messages.
+  // Anbefaler å heller sette sånn chat messages og dashboard under / slik som f.eks Facebook gjør det. Autentiser bruker når de går i /, og hvis ikke send dem til login
+
   render(Document, [
-    route("/", () => <Home />),
-    prefix("/auth", [
-      route("/login", () => <LoginPage />),
-      route("/register", () => <Register />),
-    ]),
-    route("/messages", () => <MessagesPage />),
+    route("/", HomePage),
+    route("/login", LoginPage),
+    route("/register", RegisterPage),
+    route("/messages", MessagesPage),
   ]),
 ]);
