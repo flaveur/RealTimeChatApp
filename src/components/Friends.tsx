@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "./ui/Button";
 
 // Typer
 interface User {
@@ -16,39 +17,6 @@ interface Friendship {
   status: "pending" | "accepted";
   createdAt?: string;
   friend: User | null;
-}
-
-// Knapp
-function Button({
-  children,
-  onClick,
-  variant = "primary",
-  disabled = false,
-  type = "button",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  variant?: "primary" | "secondary" | "danger";
-  disabled?: boolean;
-  type?: "button" | "submit";
-}) {
-  const base = "px-4 py-2 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed";
-  const variants = {
-    primary: "bg-blue-600 hover:bg-blue-700 text-white",
-    secondary: "bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100",
-    danger: "bg-red-600 hover:bg-red-700 text-white",
-  };
-
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className={`${base} ${variants[variant]}`}
-    >
-      {children}
-    </button>
-  );
 }
 
 export default function Friends() {
@@ -81,7 +49,7 @@ export default function Friends() {
       setLoading(true);
       const res = await fetch("/api/friends");
       if (!res.ok) throw new Error("Kunne ikke hente venner");
-      const data = await res.json() as { friends: Friendship[] };
+      const data = (await res.json()) as { friends: Friendship[] };
       setFriends(data.friends || []);
     } catch (err: any) {
       setError(err.message);
@@ -94,9 +62,11 @@ export default function Friends() {
   async function searchUsers() {
     try {
       setSearching(true);
-      const res = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(
+        `/api/users/search?q=${encodeURIComponent(searchQuery)}`
+      );
       if (!res.ok) throw new Error("Søk feilet");
-      const data = await res.json() as { users: User[] };
+      const data = (await res.json()) as { users: User[] };
       setSearchResults(data.users || []);
     } catch (err: any) {
       console.error("Søk feilet:", err);
@@ -115,7 +85,7 @@ export default function Friends() {
       });
 
       if (!res.ok) {
-        const data = await res.json() as { error?: string };
+        const data = (await res.json()) as { error?: string };
         throw new Error(data.error || "Kunne ikke sende forespørsel");
       }
 
@@ -192,9 +162,12 @@ export default function Friends() {
     <section className="space-y-4 md:space-y-6 pb-4 md:pb-0">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <article>
-          <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">Venneliste</h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
+            Venneliste
+          </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {acceptedFriends.length} {acceptedFriends.length === 1 ? "venn" : "venner"}
+            {acceptedFriends.length}{" "}
+            {acceptedFriends.length === 1 ? "venn" : "venner"}
           </p>
         </article>
         <Button onClick={() => setShowAddModal(true)}>+ Legg til venner</Button>
@@ -214,8 +187,9 @@ export default function Friends() {
           <ul className="space-y-2">
             {pendingRequests.map((friendship) => {
               if (!friendship.friend) return null;
-              const isPendingFromMe = friendship.userId !== friendship.friend.id;
-              
+              const isPendingFromMe =
+                friendship.userId !== friendship.friend.id;
+
               return (
                 <li
                   key={friendship.id}
@@ -224,7 +198,11 @@ export default function Friends() {
                   <div className="flex items-center gap-3 flex-1">
                     <figure className="relative h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
                       {friendship.friend.avatarUrl ? (
-                        <img src={friendship.friend.avatarUrl} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={friendship.friend.avatarUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
                         <span className="h-full w-full flex items-center justify-center text-white font-bold">
                           {friendship.friend.name[0].toUpperCase()}
@@ -237,18 +215,26 @@ export default function Friends() {
                         {friendship.friend.name}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {isPendingFromMe ? "Venter på svar..." : "Vil være venn med deg"}
+                        {isPendingFromMe
+                          ? "Venter på svar..."
+                          : "Vil være venn med deg"}
                       </p>
                     </article>
                   </div>
 
                   <nav className="flex gap-2 sm:flex-shrink-0">
                     {!isPendingFromMe && (
-                      <Button variant="primary" onClick={() => acceptFriend(friendship.id)}>
+                      <Button
+                        variant="primary"
+                        onClick={() => acceptFriend(friendship.id)}
+                      >
                         Aksepter
                       </Button>
                     )}
-                    <Button variant="danger" onClick={() => removeFriend(friendship.id)}>
+                    <Button
+                      variant="danger"
+                      onClick={() => removeFriend(friendship.id)}
+                    >
                       {isPendingFromMe ? "Avbryt" : "Avvis"}
                     </Button>
                   </nav>
@@ -271,7 +257,7 @@ export default function Friends() {
           <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {acceptedFriends.map((friendship) => {
               if (!friendship.friend) return null;
-              
+
               return (
                 <li
                   key={friendship.id}
@@ -280,7 +266,11 @@ export default function Friends() {
                   <figure className="relative h-12 w-12 flex-shrink-0">
                     <span className="block h-full w-full rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden flex items-center justify-center">
                       {friendship.friend.avatarUrl ? (
-                        <img src={friendship.friend.avatarUrl} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={friendship.friend.avatarUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
                         <span className="h-full w-full flex items-center justify-center text-white font-bold">
                           {friendship.friend.name[0].toUpperCase()}
@@ -288,7 +278,9 @@ export default function Friends() {
                       )}
                     </span>
                     <span
-                      className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-800 shadow-sm ${statusColors[friendship.friend.status]}`}
+                      className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-gray-800 shadow-sm ${
+                        statusColors[friendship.friend.status]
+                      }`}
                       title={statusLabels[friendship.friend.status]}
                       aria-label={statusLabels[friendship.friend.status]}
                     />
@@ -336,7 +328,9 @@ export default function Friends() {
             </header>
 
             <section className="mb-4">
-              <label htmlFor="search" className="sr-only">Søk etter brukernavn</label>
+              <label htmlFor="search" className="sr-only">
+                Søk etter brukernavn
+              </label>
               <input
                 id="search"
                 type="text"
@@ -353,61 +347,68 @@ export default function Friends() {
                   Søker...
                 </li>
               )}
-              
-              {!searching && searchResults.length === 0 && searchQuery.trim().length >= 2 && (
-                <li className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                  Ingen brukere funnet
-                </li>
-              )}
 
-              {!searching && searchResults.map((user) => {
-                const friendshipStatus = friends.find(
-                  (f) => f.friend?.id === user.id
-                );
-  
-                const isPending = friendshipStatus?.status === "pending";
-                const isAccepted = friendshipStatus?.status === "accepted";
-
-                return (
-                  <li
-                    key={user.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"
-                  >
-                    <figure className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="h-full w-full flex items-center justify-center text-white font-bold text-sm">
-                          {user.name[0].toUpperCase()}
-                        </span>
-                      )}
-                    </figure>
-
-                    <article className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {user.name}
-                      </p>
-                    </article>
-
-                    {isAccepted ? (
-                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                        Allerede venn
-                      </span>
-                    ) : isPending ? (
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                        Ventende forespørsel
-                      </span>
-                    ) : (
-                      <Button
-                        variant="primary"
-                        onClick={() => sendFriendRequest(user.id)}
-                      >
-                        Legg til
-                      </Button>
-                    )}
+              {!searching &&
+                searchResults.length === 0 &&
+                searchQuery.trim().length >= 2 && (
+                  <li className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
+                    Ingen brukere funnet
                   </li>
-                );
-              })}
+                )}
+
+              {!searching &&
+                searchResults.map((user) => {
+                  const friendshipStatus = friends.find(
+                    (f) => f.friend?.id === user.id
+                  );
+
+                  const isPending = friendshipStatus?.status === "pending";
+                  const isAccepted = friendshipStatus?.status === "accepted";
+
+                  return (
+                    <li
+                      key={user.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"
+                    >
+                      <figure className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden">
+                        {user.avatarUrl ? (
+                          <img
+                            src={user.avatarUrl}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="h-full w-full flex items-center justify-center text-white font-bold text-sm">
+                            {user.name[0].toUpperCase()}
+                          </span>
+                        )}
+                      </figure>
+
+                      <article className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {user.name}
+                        </p>
+                      </article>
+
+                      {isAccepted ? (
+                        <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                          Allerede venn
+                        </span>
+                      ) : isPending ? (
+                        <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                          Ventende forespørsel
+                        </span>
+                      ) : (
+                        <Button
+                          variant="primary"
+                          onClick={() => sendFriendRequest(user.id)}
+                        >
+                          Legg til
+                        </Button>
+                      )}
+                    </li>
+                  );
+                })}
             </ul>
           </article>
         </aside>

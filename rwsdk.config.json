@@ -1,0 +1,8 @@
+{
+  "clientLookupIgnore": [
+    "**/react-router/**",
+    "**/react-router-dom/**",
+    "**/Sidebar.tsx",
+    "**/AppLayout.tsx"
+  ]
+}

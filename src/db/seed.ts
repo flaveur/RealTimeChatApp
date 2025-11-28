@@ -1,29 +1,27 @@
-import { drizzle } from "drizzle-orm/d1";
-import { defineScript } from "rwsdk/worker";
-import { users } from ".";
+// src/db/seed.ts
+import { users } from "./schema";
+import { setupDb } from ".";
+import { hashPassword } from "@/app/lib/auth/password";
 
-export default defineScript(async ({ env }) => {
-  try {
-    const db = drizzle(env.DB);
-    await db.delete(users);
+export async function runSeed(d1: D1Database) {
+  const db = setupDb(d1);
+  await db.delete(users);
 
-    // Sett inn en testbruker
-    await db.insert(users).values({
-      name: "Test user",
-      email: "test@testuser.io",
-    });
+  const passwordHash = await hashPassword("test123456");
 
-    // Verifiser innsatt bruker ved å velge alle brukere
-    const result = await db.select().from(users).all();
+  await db.insert(users).values({
+    username: "test",
+    email: "test@testuser.io",
+    passwordHash,
+    role: "admin",
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
 
-    console.log("🌱 Ferdig med seeding");
+  const result = await db.select().from(users).all();
 
-    return Response.json(result);
-  } catch (error) {
-    console.error("Error seeding database:", error);
-    return Response.json({
-      success: false,
-      error: "Failed to seed database",
-    });
-  }
-});
+  console.log("🌱 Ferdig med seeding");
+
+  return result;
+}

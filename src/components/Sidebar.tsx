@@ -1,14 +1,10 @@
-'use client';
-
 import { rwsdk } from "@/app/lib/rwsdk";
 import { applyTheme } from "@/app/lib/theme";
 import { MessageSquare, Settings, StickyNote, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 
 export default function Sidebar() {
   useEffect(() => applyTheme(), []);
-  const location = useLocation();
   const [user, setUser] = useState(() => rwsdk.auth.useCurrentUser());
 
   // Lytt til endringer i brukerdata (inkludert status)
@@ -62,7 +58,8 @@ export default function Sidebar() {
                   alt={`${user.name}'s avatar`}
                   className="h-full w-full object-cover"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
                   }}
                 />
               ) : (
@@ -85,12 +82,12 @@ export default function Sidebar() {
             </p>
           </div>
         </div>
-        <Link
+        <a
           to="/settings"
           className="block w-full text-center text-xs px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
         >
           Rediger profil
-        </Link>
+        </a>
       </header>
 
       {/* Navigasjon - Horisontal på mobil, vertikal på desktop */}
@@ -99,7 +96,7 @@ export default function Sidebar() {
           const active = location.pathname === href;
           return (
             <li key={href} className="flex-1 md:flex-none">
-              <Link
+              <a
                 to={href}
                 className={`flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 md:px-4 py-2 md:py-2 rounded-lg transition ${
                   active
@@ -109,7 +106,7 @@ export default function Sidebar() {
               >
                 <Icon className="w-5 h-5 md:w-5 md:h-5" />
                 <span className="text-xs md:text-base">{label}</span>
-              </Link>
+              </a>
             </li>
           );
         })}

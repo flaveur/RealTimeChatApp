@@ -1,5 +1,3 @@
-'use client';
-
 import { rwsdk, type Status } from "@/app/lib/rwsdk";
 import { useSyncExternalStore } from "react";
 
@@ -42,7 +40,9 @@ export default function UserStatus() {
         aria-hidden
       >
         <span
-          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900 ${colors[me.status]}`}
+          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900 ${
+            colors[me.status]
+          }`}
           title={labels[me.status]}
         />
       </figure>

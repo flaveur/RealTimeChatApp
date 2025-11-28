@@ -1,30 +1,30 @@
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { cloudflare } from "@cloudflare/vite-plugin";
+import { redwood } from "rwsdk/vite";
+import tailwindcss from "@tailwindcss/vite";
 
-// Dette er standardkonfigurasjonen for ditt prosjekt
+import { fileURLToPath, URL } from "node:url";
+
 export default defineConfig({
-  plugins: [react()],
-
-  // Vite skal lete etter index.html i rotmappa (C:\RealTimeChatApp)
-  root: ".",
-
-  // Sikrer at dev-server kjører på IPv4 (ikke [::1])
+  environments: {
+    ssr: {},
+  },
+  plugins: [
+    cloudflare({
+      viteEnvironment: { name: "worker" },
+    }),
+    redwood(),
+    tailwindcss(),
+  ],
   server: {
     host: "127.0.0.1",
     port: 5173,
-    open: true, // Åpner nettleseren automatisk
+    open: true,
   },
 
-  // Output bygges til "dist" ved build
-  build: {
-    outDir: "dist",
-    emptyOutDir: true,
-  },
-
-  // Støtte for absolutte imports (f.eks. "@/app/pages/...")
   resolve: {
     alias: {
-      "@": "/src",
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
 });

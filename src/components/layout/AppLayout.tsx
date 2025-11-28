@@ -1,9 +1,7 @@
-// src/components/ui/AppLayout.tsx
-
-import { useEffect, type ReactNode } from "react";
 import { applyTheme } from "@/app/lib/theme";
 import { useActivityMonitor } from "@/app/lib/useActivityMonitor";
 import Sidebar from "@/components/Sidebar";
+import { ReactNode, useEffect } from "react";
 
 interface Props {
   title?: string;
@@ -11,12 +9,9 @@ interface Props {
 }
 
 export default function AppLayout({ title, children }: Props) {
-  // Apply theme once on mount
-  useEffect(() => {
-    applyTheme();
-  }, []);
+  useEffect(() => applyTheme(), []);
 
-  // Monitor user activity for away status
+  // Overvåk brukeraktivitet for automatisk "away"-status
   useActivityMonitor();
 
   return (
@@ -26,7 +21,7 @@ export default function AppLayout({ title, children }: Props) {
                  text-gray-900 dark:text-gray-100 transition-colors pb-20 md:pb-0"
     >
       <section className="mx-auto flex flex-col md:flex-row max-w-[1500px] gap-4 md:gap-6 px-3 md:px-6 py-4 md:py-10">
-        {/* Desktop Sidebar - hidden on mobile */}
+        {/* Desktop Sidebar - Skjult på mobil */}
         <aside
           aria-label="Navigasjon"
           className="hidden md:block w-64 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800
@@ -35,7 +30,7 @@ export default function AppLayout({ title, children }: Props) {
           <Sidebar />
         </aside>
 
-        {/* Main content */}
+        {/* Hovedinnhold */}
         <article
           className="flex-1 bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 
                      rounded-xl md:rounded-3xl shadow-2xl p-4 md:p-8 backdrop-blur-lg transition-all"
@@ -51,7 +46,7 @@ export default function AppLayout({ title, children }: Props) {
         </article>
       </section>
 
-      {/* Mobile bottom nav */}
+      {/* Mobil Bunnmeny - Kun synlig på mobil */}
       <nav
         aria-label="Mobil navigasjon"
         className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 shadow-lg z-50"

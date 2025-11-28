@@ -1,14 +1,5 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "./main";
-import "./styles.css";
+import { initClient, initClientNavigation } from "rwsdk/client";
 
-const container = document.getElementById("root");
-if (container) {
-  const root = createRoot(container);
-  root.render(
-    <StrictMode>
-      <App />
-    </StrictMode>
-  );
-}
+initClient();
+// !  TODO: Bug => if used then Location header is not resolved
+//initClientNavigation({ scrollBehavior: "smooth" });

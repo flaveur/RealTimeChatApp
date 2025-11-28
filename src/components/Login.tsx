@@ -1,8 +1,9 @@
-'use client';
+// src/app/pages/Login.tsx
 
-import { Button } from "@/components/ui/Button";
+"use client";
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/Button";
 
 export default function Login() {
   const [error, setError] = useState("");
@@ -24,7 +25,7 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -48,8 +49,12 @@ export default function Login() {
     <main className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors">
       <article className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-800">
         <header className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">RealTime ChatApp</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Logg inn for å fortsette</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            RealTime ChatApp
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Logg inn for å fortsette
+          </p>
         </header>
 
         {error && (
@@ -60,7 +65,10 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <fieldset>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Brukernavn
             </label>
             <input
@@ -74,7 +82,10 @@ export default function Login() {
           </fieldset>
 
           <fieldset>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Passord
             </label>
             <input
@@ -97,12 +108,12 @@ export default function Login() {
 
         <nav className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           Har du ikke konto?{" "}
-          <Link
-            to="/register"
+          <a
+            href="/auth/register"
             className="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
           >
             Registrer deg
-          </Link>
+          </a>
         </nav>
       </article>
     </main>

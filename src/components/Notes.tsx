@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "./ui/Button";
 
 interface Note {
   id: string;
@@ -27,7 +25,7 @@ export default function Notes() {
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [newNote]);
@@ -37,7 +35,7 @@ export default function Notes() {
       setLoading(true);
       const res = await fetch("/api/notes", { credentials: "same-origin" });
       if (!res.ok) throw new Error("Kunne ikke hente notater");
-      const data = await res.json() as { notes: Note[] };
+      const data = (await res.json()) as { notes: Note[] };
       setNotes(data.notes || []);
     } catch (err: any) {
       setError(err.message);
@@ -46,9 +44,10 @@ export default function Notes() {
     }
   }
 
-  const filteredNotes = notes.filter((n) =>
-    n.title.toLowerCase().includes(search.toLowerCase()) ||
-    n.content.toLowerCase().includes(search.toLowerCase())
+  const filteredNotes = notes.filter(
+    (n) =>
+      n.title.toLowerCase().includes(search.toLowerCase()) ||
+      n.content.toLowerCase().includes(search.toLowerCase())
   );
 
   async function handleAddNote(e: React.FormEvent) {
@@ -64,7 +63,7 @@ export default function Notes() {
       });
 
       if (!res.ok) throw new Error("Kunne ikke opprette notat");
-      
+
       await fetchNotes();
       setNewNote("");
     } catch (err: any) {
@@ -82,7 +81,7 @@ export default function Notes() {
       });
 
       if (!res.ok) throw new Error("Kunne ikke slette notat");
-      
+
       await fetchNotes();
     } catch (err: any) {
       alert(err.message);
@@ -92,7 +91,9 @@ export default function Notes() {
   if (loading) {
     return (
       <main className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-3xl p-4 sm:p-8 shadow-sm transition-colors">
-        <p className="text-gray-500 dark:text-gray-400 text-center">Laster notater...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-center">
+          Laster notater...
+        </p>
       </main>
     );
   }
@@ -101,7 +102,9 @@ export default function Notes() {
     <main className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm transition-colors pb-6 md:pb-8">
       {/* Topptekst */}
       <header className="mb-4 md:mb-6">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mb-1">Mine notater</h1>
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+          Mine notater
+        </h1>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Opprett, søk og administrer dine notater
         </p>
@@ -146,7 +149,7 @@ export default function Notes() {
             onChange={(e) => setNewNote(e.target.value)}
             rows={3}
             maxLength={500}
-            style={{ minHeight: '80px', maxHeight: '300px', overflowY: 'auto' }}
+            style={{ minHeight: "80px", maxHeight: "300px", overflowY: "auto" }}
             className="w-full resize-none px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 
                       focus:ring-2 focus:ring-blue-500 outline-none text-base"
@@ -154,7 +157,7 @@ export default function Notes() {
           <p className="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">
             {newNote.length}/500 tegn
           </p>
-          <Button type="submit" disabled={!newNote.trim()} className="self-end">
+          <Button type="submit" disabled={!newNote.trim()}>
             Legg til
           </Button>
         </form>
@@ -194,7 +197,6 @@ export default function Notes() {
                   type="button"
                   variant="danger"
                   onClick={() => handleDelete(note.id)}
-                  className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity self-end sm:self-start"
                 >
                   Slett
                 </Button>
