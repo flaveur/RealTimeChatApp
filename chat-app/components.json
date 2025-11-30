@@ -1,0 +1,11 @@
+{
+  "name": "shadcn-configuration",
+  "theme": "default",
+  "aliases": {
+    "components": "@/app/components",
+    "utils": "@/app/lib/utils",
+    "ui": "@/app/components/ui",
+    "lib": "@/app/lib",
+    "hooks": "@/app/hooks"
+  }
+}

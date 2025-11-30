@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg, #f3f4f6);
+  transition: background-color 200ms ease;
+}
+
+.register-card {
+  background: var(--card-bg, #fff);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.08);
+  padding: 2rem;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.register-header {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.register-header h1 { font-size: 1.75rem; margin: 0; }
+.register-header p { margin-top: 0.25rem; color: #6b7280; }
+
+.form-field { margin-bottom: 0.75rem; }
+.form-field label { display:block; font-size: 0.875rem; margin-bottom: 0.25rem; color:#374151 }
+.form-field input {
+  width:100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  outline: none;
+}
+.form-footer { padding-top:1rem; }
+
+.btn { display:inline-block; width:100%; padding:0.75rem; border-radius:10px; background:#2563eb; color:#fff; border:none; cursor:pointer }
+.btn[disabled] { opacity:0.6; cursor:default }
+
+.error-box { margin-bottom:1rem; padding:0.75rem; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#b91c1c; font-size:0.9rem }
+
+.success-card { text-align:center }
+.success-icon { width:64px;height:64px;border-radius:9999px; margin:0 auto 0.5rem; display:flex; align-items:center; justify-content:center; background:#ecfdf5 }
+
+.small-nav { margin-top:1rem; text-align:center; font-size:0.9rem; color:#6b7280 }
+.small-nav a { color:#2563eb; text-decoration: none }
