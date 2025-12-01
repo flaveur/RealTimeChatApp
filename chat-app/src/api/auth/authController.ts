@@ -1,28 +1,76 @@
 import bcrypt from 'bcryptjs';
 import { getDb } from '../../lib/db.server';
 import { users } from '../../../drizzle/schema';
+import { eq } from 'drizzle-orm';
 
-export async function registerUser(env: any, payload: { username: string; password: string; displayName?: string }) {
-  const db = getDb(env.chat_appd1);
+interface Env {
+  chat_appd1: D1Database;
+}
 
-  // simple uniqueness check
-  const existing = await db.select().from(users).all();
-  if (existing.find((u: any) => u.username === payload.username)) {
+interface RegisterPayload {
+  username: string;
+  password: string;
+  displayName?: string;
+}
+
+interface LoginPayload {
+  username: string;
+  password: string;
+}
+
+interface UserRow {
+  id: number;
+  username: string;
+  displayName: string | null;
+  password: string | null;
+  createdAt: string | null;
+}
+
+export async function registerUser(env: Env, payload: RegisterPayload) {
+  const db = getDb(env.chat_appd1); // Hent database instans
+
+  // Sjekk om brukernavnet allerede finnes
+  const existing = await db.select().from(users).where(eq(users.username, payload.username));
+  
+  if (existing.length > 0) {
     throw new Error('username_taken');
   }
 
+  // Hash passordet før lagring
   const hash = await bcrypt.hash(payload.password, 10);
-  const res = await db.insert(users).values({ username: payload.username, displayName: payload.displayName || null, /* createdAt handled by DB */ password: hash } as any);
+  
+  // Sett inn ny bruker i databasen
+  const res = await db.insert(users).values({
+    username: payload.username,
+    displayName: payload.displayName || null,
+    password: hash,
+  });
+
   return res;
 }
 
-export async function loginUser(env: any, payload: { username: string; password: string }) {
+export async function loginUser(env: Env, payload: LoginPayload) {
   const db = getDb(env.chat_appd1);
-  const rows = await db.select().from(users).all();
-  const user = rows.find((u: any) => u.username === payload.username);
-  if (!user) return null;
+  
+  // Hent bruker basert på brukernavn
+  const rows = await db.select().from(users).where(eq(users.username, payload.username));
+  const user = rows[0] as UserRow | undefined;
+
+  if (!user) {
+    return null; // Bruker ikke funnet
+  }
+
+  // Sjekk om passordet stemmer
   const ok = await bcrypt.compare(payload.password, user.password || '');
-  if (!ok) return null;
-  // return minimal user info
-  return { id: user.id, username: user.username, displayName: user.display_name || user.displayName };
+  
+  if (!ok) {
+    return null; // Feil passord
+  }
+
+  // Returner brukerdata uten passord
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+  };
 }
