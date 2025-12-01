@@ -25,25 +25,13 @@ export function Navigation({ user }: { user: SafeUser | null }) {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">
             <a href="/" className="text-xl font-bold text-gray-900">
-              Spørsmålplattformen
+              RealTime ChatApp
             </a>
 
             <div className="hidden md:flex items-center space-x-4">
-              <a
-                href="/questions"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
-              >
-                Spørsmål
-              </a>
-
-              {userIsAuthenticated && (
-                <a
-                  href="/questions/new"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
-                >
-                  Nytt spørsmål
-                </a>
-              )}
+              <a href="/messages" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">Meldinger</a>
+              <a href="/friends" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">Venneliste</a>
+              <a href="/notes" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">Notater</a>
             </div>
           </div>
 

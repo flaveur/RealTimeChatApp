@@ -1,5 +1,5 @@
 "use client";
-import "./login.css";
+import "./auth.css";
 import React, { useState } from "react";
 import useAuth from '@/app/hooks/useAuth';
 
@@ -37,9 +37,9 @@ export default function LoginForm() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors">
-      <article className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-800">
-        <header className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">RealTime ChatApp</h1>
+      <article className="auth-card">
+        <header className="auth-header">
+          <h1>RealTime ChatApp</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">Logg inn for å fortsette</p>
         </header>
 
@@ -58,7 +58,7 @@ export default function LoginForm() {
               id="username"
               name="username"
               required
-              className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              className="auth-input"
               placeholder="Ditt brukernavn"
             />
           </fieldset>
@@ -72,7 +72,7 @@ export default function LoginForm() {
               name="password"
               type="password"
               required
-              className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              className="auth-input"
               placeholder="••••••••"
             />
           </fieldset>

@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Shared auth styles for Login and Register forms */
+.auth-page {
+  @apply min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors;
+}
+
+.auth-card {
+  @apply bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-800;
+}
+
+.auth-header { @apply mb-6 text-center }
+.auth-header h1 { @apply text-3xl font-bold text-gray-900 dark:text-white }
+.auth-header p { @apply text-gray-600 dark:text-gray-400 mt-1 }
+
+.auth-error { @apply mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm }
+
+.auth-input { @apply mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none }
+
+.auth-footer { @apply pt-4 }
+
+.auth-small { @apply mt-6 text-center text-sm text-gray-600 dark:text-gray-400 }

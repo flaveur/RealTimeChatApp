@@ -13,6 +13,7 @@ import Login from "@/app/pages/Login";
 import Register from "@/app/pages/Register";
 import Messages from "@/app/pages/Messages";
 import Friends from "@/app/pages/Friends";
+import Settings from "./app/pages/Settings";
 
 export type AppContext = {};
 
@@ -45,7 +46,7 @@ export default {
         prefix("/app", [
           route(
             "/dashboard",
-            () => <div className="p-4">Realtime Dashboard (example)</div>
+            () => <div className="p-4"></div>
           ),
         ]),
       ]),

@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* Component-scoped Tailwind utilities for MessagesPage */
+.messages-root {
+  @apply flex flex-col md:flex-row rounded-xl md:rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700;
+}
+
+.messages-sidebar {
+  @apply w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 overflow-y-auto;
+}
+
+.messages-sidebar-header {
+  @apply px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between;
+}
+
+.messages-sidebar-title {
+  @apply text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide;
+}
+
+.messages-thread-list {
+  @apply divide-y divide-gray-200 dark:divide-gray-700;
+}
+
+.messages-thread-item {
+  @apply w-full text-left flex items-center gap-3 px-4 py-3 transition-colors text-gray-800 dark:text-gray-300;
+}
+
+.messages-thread-item.active {
+  @apply bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300;
+}
+
+.messages-thread-avatar {
+  @apply h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0 overflow-hidden flex items-center justify-center;
+}
+
+.messages-initials {
+  @apply h-full w-full flex items-center justify-center text-white font-bold text-sm;
+}
+
+.messages-thread-meta p.text-muted {
+  @apply truncate text-xs text-gray-500 dark:text-gray-400;
+}
+
+.messages-article {
+  @apply flex-1 flex-col bg-white dark:bg-gray-900;
+}
+
+.messages-article-header {
+  @apply px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center gap-3;
+}
+
+.messages-list {
+  @apply flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3;
+}
+
+.messages-footer {
+  @apply border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 md:p-4;
+}
+
+.messages-input {
+  @apply flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 md:px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base;
+}
+
+.text-muted { @apply text-gray-500 dark:text-gray-400; }
+

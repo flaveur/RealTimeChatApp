@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.settings-root {
+  @apply space-y-6;
+}

@@ -1,4 +1,5 @@
 "use client";
+import "./messages.css";
 
 import React from "react";
 
@@ -29,23 +30,22 @@ export default function MessagesClient() {
   }
 
   return (
-    <div className="p-6 flex flex-col h-full">
+    <div className="messages-root">
       <h1 className="text-2xl mb-4">Messages</h1>
-      <div className="flex-1 overflow-auto space-y-2 mb-4">
+      <div className="messages-list">
         {messages.map((m) => (
-          <div key={m.id} className="card">
-            <div className="text-sm muted">User {m.userId}</div>
+          <div key={m.id} className="message-item">
+            <div className="text-sm text-gray-500">User {m.userId}</div>
             <div className="mt-1">{m.body}</div>
           </div>
         ))}
       </div>
 
       <div className="flex gap-2">
-        <input className="flex-1 p-2 rounded bg-black/20" value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message" />
-        <button className="px-4 py-2 rounded bg-accent text-black" onClick={send}>Send</button>
+        <input className="message-input" value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message" />
+        <button className="message-send" onClick={send}>Send</button>
       </div>
     </div>
   );
 }
 
-"use client";

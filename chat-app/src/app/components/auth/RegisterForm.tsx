@@ -1,5 +1,5 @@
 "use client";
-import "./register.css";
+import "./auth.css";
 import React, { useState } from "react";
 import { Button } from "@/app/components/ui/Button";
 import useAuth from "@/app/hooks/useAuth";
@@ -64,22 +64,22 @@ export default function RegisterForm() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <article className="w-full max-w-md card">
+    <main className="auth-page">
+      <article className="auth-card">
         <h1 className="text-3xl font-bold mb-4">Opprett konto</h1>
         {error && <div className="text-red-500 mb-3">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Brukernavn</label>
-            <input className="w-full p-2 rounded bg-black/5" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <label className="block text-sm font-medium mb-1">Brukernavn</label>
+              <input className="auth-input" value={username} onChange={(e) => setUsername(e.target.value)} />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">E-post</label>
-            <input className="w-full p-2 rounded bg-black/5" value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
+            <input className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Passord</label>
-            <input className="w-full p-2 rounded bg-black/5" value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
+            <input className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
           </div>
 
           <div className="pt-2">
