@@ -1,5 +1,5 @@
 "use client";
-import "./auth.css";
+import "./register.css";
 import React, { useState } from "react";
 import { Button } from "@/app/components/ui/Button";
 import useAuth from "@/app/hooks/useAuth";
@@ -63,30 +63,82 @@ export default function RegisterForm() {
   }
 
   return (
-    <main className="auth-page">
-      <article className="auth-card">
-        <h1 className="text-3xl font-bold mb-4">Opprett konto</h1>
-        {error && <div className="text-red-500 mb-3">{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-              <label className="block text-sm font-medium mb-1">Brukernavn</label>
-              <input className="auth-input" value={username} onChange={(e) => setUsername(e.target.value)} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">E-post</label>
-            <input className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Passord</label>
-            <input className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
-          </div>
+    <main className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors">
+      <article className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-800">
+        <header className="mb-6 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">RealTime ChatApp</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Opprett en ny konto</p>
+        </header>
 
-          <div className="pt-2">
-            <Button type="submit" disabled={loading} className="w-full">
+        {error && (
+          <aside className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+            {error}
+          </aside>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <fieldset>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Brukernavn
+            </label>
+            <input
+              id="username"
+              name="username"
+              required
+              className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Ditt brukernavn"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </fieldset>
+
+          <fieldset>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              E-post
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Din e-post"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </fieldset>
+
+          <fieldset>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Passord
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </fieldset>
+
+          <footer className="pt-4">
+            <button
+              className="w-full inline-flex items-center justify-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50"
+              type="submit"
+              disabled={loading}
+            >
               {loading ? "Registrerer…" : "Registrer"}
-            </Button>
-          </div>
+            </button>
+          </footer>
         </form>
+
+        <nav className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          Har du konto?{' '}
+          <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none">Logg inn</a>
+        </nav>
       </article>
     </main>
   );
