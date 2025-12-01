@@ -13,7 +13,7 @@ initClientNavigation({
   },
 });
 
-// Mount Friends client into placeholder if present... Copilot
+// Mount Friends client into placeholder if present... Copilot 
 async function mountFriends() {
 	try {
 		const el = document.getElementById('friends-root');
