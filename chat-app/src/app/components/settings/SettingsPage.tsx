@@ -291,6 +291,10 @@ export default function SettingsPage() {
               return (
                 <label
                   key={t}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setTheme(t);
+                  }}
                   className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 cursor-pointer transition ${
                     theme === t
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
@@ -405,8 +409,7 @@ function UserStatusEditable() {
     return unsub;
   }, []);
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement>, newStatus: "online" | "busy" | "away") => {
-    e.preventDefault();
+  const handleStatusChange = (newStatus: "online" | "busy" | "away") => {
     rwsdk.auth.setStatus(newStatus);
   };
 
@@ -423,6 +426,10 @@ function UserStatusEditable() {
       {statusOptions.map(({ value, label, color, description }) => (
         <label
           key={value}
+          onClick={(e) => {
+            e.preventDefault();
+            handleStatusChange(value);
+          }}
           className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 cursor-pointer transition ${
             currentStatus === value
               ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
@@ -434,7 +441,7 @@ function UserStatusEditable() {
             name="status"
             value={value}
             checked={currentStatus === value}
-            onChange={(e) => handleStatusChange(e, value)}
+            onChange={() => handleStatusChange(value)}
             className="sr-only"
           />
           <span className={`h-4 w-4 rounded-full ${color} flex-shrink-0`} />

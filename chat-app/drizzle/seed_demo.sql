@@ -1,9 +1,9 @@
 -- Seed demo brukere
 INSERT OR IGNORE INTO users (id, username, display_name, password, status, created_at) 
-VALUES (1, 'demo', 'Demo User', '$2a$10$sGdHGqbQ4fJVWGof77mfkO/Rnt8KjW1inZAEPrP7YOTrJVdycE0Je', 'online', datetime('now'));
+VALUES (1, 'demo', 'Demo User', '$2a$10$S/o8shIlodvOG2RPiHMEyedCAwImF/w73KIzJe4K0lWK8xg27Jb/S', 'online', datetime('now'));
 
 INSERT OR IGNORE INTO users (id, username, display_name, password, status, created_at) 
-VALUES (2, 'testuser', 'Test Bruker', '$2a$10$sGdHGqbQ4fJVWGof77mfkO/Rnt8KjW1inZAEPrP7YOTrJVdycE0Je', 'offline', datetime('now'));
+VALUES (2, 'testuser', 'Test Bruker', '$2a$10$S/o8shIlodvOG2RPiHMEyedCAwImF/w73KIzJe4K0lWK8xg27Jb/S', 'offline', datetime('now'));
 
 -- Legg til vennskap mellom demo og testuser
 INSERT OR IGNORE INTO friendships (user_id, friend_id, created_at)
