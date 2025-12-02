@@ -4,41 +4,18 @@ import { rwsdk } from "@/app/lib/rwsdk";
 import { applyTheme } from "@/app/lib/theme";
 import { MessageSquare, Settings, StickyNote, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import UserStatus from "../shared/UserStatus";
 
 
 export default function Sidebar() {
   useEffect(() => applyTheme(), []);
-  const [user, setUser] = useState(() => rwsdk.auth.useCurrentUser());
 
   return (
     <div>
        <div className="flex h-[calc(100vh-64px)] bg-gray-950">
       <aside className="w-56 border-r border-gray-800 flex flex-col bg-gray-950 py-4">
         <div className="px-4 mb-4">
-          <div className="p-4 rounded-2xl border border-gray-800 bg-gray-900/50">
-            <div className="flex items-center gap-3 mb-4">
-              <figure className="relative h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-white">
-                  {user?.name
-                    ? user.name
-                        .split(/\s+/)
-                        .slice(0, 2)
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : "?"}
-                </span>
-                <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-gray-900"></span>
-              </figure>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-white">{user?.name ?? "User"}</p>
-                <p className="text-xs text-gray-400">Frakoblet</p>
-              </div>
-            </div>
-            <button className="w-full text-center text-xs px-3 py-2 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 transition font-medium">
-              Rediger profil
-            </button>
-          </div>
+          <UserStatus />
         </div>
 
         <nav className="px-4 space-y-2">

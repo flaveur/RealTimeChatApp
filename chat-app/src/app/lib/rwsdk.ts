@@ -29,18 +29,42 @@ export const rwsdk = {
       };
     },
     async setStatus(s: Status) {
-      if (state.currentUser) state.currentUser.status = s;
-      listeners.forEach((l) => l());
-      return { ok: true };
+      try {
+        const res = await fetch("/api/me/status", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: s }),
+        });
+        if (!res.ok) return { ok: false, error: "Failed to update status" };
+        
+        if (state.currentUser) state.currentUser.status = s;
+        listeners.forEach((l) => l());
+        return { ok: true };
+      } catch (error) {
+        return { ok: false, error: String(error) };
+      }
     },
     async updateName(name: string) {
-      if (!state.currentUser) return { ok: false, error: 'no-user' };
-      state.currentUser.name = name;
-      listeners.forEach((l) => l());
-      return { ok: true };
+      try {
+        const res = await fetch("/api/me/name", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          return { ok: false, error: data.error || "Failed to update name" };
+        }
+        
+        if (state.currentUser) state.currentUser.name = name;
+        listeners.forEach((l) => l());
+        return { ok: true };
+      } catch (error) {
+        return { ok: false, error: String(error) };
+      }
     },
     async updateAvatar(file: File) {
-      // noop shim
+      // Avatar opplasting er ikke implementert ennå
       return { ok: true };
     },
   },

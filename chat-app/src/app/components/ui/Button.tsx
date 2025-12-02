@@ -3,7 +3,7 @@ import React from "react";
 import cn from "clsx";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "ghost" | "outline";
+  variant?: "default" | "ghost" | "outline" | "danger";
 }
 
 export function Button({ className, variant = "default", ...props }: ButtonProps) {
@@ -12,6 +12,7 @@ export function Button({ className, variant = "default", ...props }: ButtonProps
     default: "bg-blue-600 text-white hover:bg-blue-700",
     ghost: "bg-transparent text-gray-900 hover:bg-gray-100",
     outline: "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50",
+    danger: "bg-red-600 text-white hover:bg-red-700",
   };
 
   return <button className={cn(base, variants[variant], className)} {...props} />;

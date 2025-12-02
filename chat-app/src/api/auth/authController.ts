@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { getDb } from '../../lib/db.server';
 import { users } from '../../../drizzle/schema';
+import { sessions } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 
 interface Env {
@@ -67,10 +68,22 @@ export async function loginUser(env: Env, payload: LoginPayload) {
     return null; // Feil passord
   }
 
-  // Returner brukerdata uten passord
+  // Opprett ny session
+  const sessionToken = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 dager
+  
+  await db.insert(sessions).values({
+    token: sessionToken,
+    userId: String(user.id),
+    createdAt: new Date().toISOString(),
+    expiresAt: expiresAt,
+  });
+
+  // Returner brukerdata uten passord + session token
   return {
     id: user.id,
     username: user.username,
     displayName: user.displayName,
+    sessionToken,
   };
 }

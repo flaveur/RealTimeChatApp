@@ -1,6 +1,6 @@
 import { authenticateUser } from "./utils";
 import { eq, desc } from "drizzle-orm";
-import { notes } from "../db/schema";
+import { notes } from "../../../drizzle/schema";
 
 export async function getNotes(request: Request, db: any) {
   const auth = await authenticateUser(request, db);

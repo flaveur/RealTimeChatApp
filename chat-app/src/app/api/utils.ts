@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
-import { sessions, users } from "../db/schema";
+import { sessions, users } from "../../../drizzle/schema";
 
-export async function authenticateUser(request: Request, db: any): Promise<{ userId: string } | null> {
+export async function authenticateUser(request: Request, db: any): Promise<{ userId: number } | null> {
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;)\s*session=([^;]+)/);
   const token = match ? match[1] : null;
@@ -11,7 +11,10 @@ export async function authenticateUser(request: Request, db: any): Promise<{ use
   if (!s || s.length === 0) return null;
 
   const sess = s[0] as any;
-  return { userId: sess.userId ?? sess.user_id };
+  const userId = parseInt(sess.userId ?? sess.user_id, 10);
+  if (isNaN(userId)) return null;
+  
+  return { userId };
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -23,14 +26,15 @@ export async function hashPassword(password: string): Promise<string> {
     .join("");
 }
 
-export async function getUserData(db: any, userId: string) {
+export async function getUserData(db: any, userId: number) {
   const u = await db.select().from(users).where(eq(users.id, userId)).all();
   if (!u || u.length === 0) return null;
   const user = u[0] as any;
   return {
     id: user.id,
     username: user.username,
-    name: user.username,
+    displayName: user.display_name ?? user.displayName,
+    name: user.display_name ?? user.displayName ?? user.username,
     avatarUrl: user.avatar_url ?? user.avatarUrl,
     status: user.status ?? "offline",
   };

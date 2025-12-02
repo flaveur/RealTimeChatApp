@@ -109,10 +109,13 @@ export async function loginHandler(context: any): Promise<Response> {
       });
     }
 
-    // Login akseptert
-    return new Response(JSON.stringify({ ok: true, user }), {
+    // Login akseptert - sett session cookie
+    return new Response(JSON.stringify({ ok: true, user: { id: user.id, username: user.username, displayName: user.displayName } }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Set-Cookie': `session=${user.sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
+      },
     });
   } catch (err) {
     // General feil

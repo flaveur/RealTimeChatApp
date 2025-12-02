@@ -1,5 +1,4 @@
 // Database schema definition
-import { drizzle } from 'drizzle-orm';
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 /* ================================
@@ -12,6 +11,16 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),  // Hashet passord
   status: text("status").default("offline"),       // "online" / "offline"
   createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+});
+
+/* ================================
+   SESSIONS TABLE
+   ================================ */
+export const sessions = sqliteTable("sessions", {
+  token: text("token").primaryKey(),
+  userId: text("user_id").notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+  expiresAt: text("expires_at"),
 });
 
 /* ================================
@@ -57,6 +66,18 @@ export const friendships = sqliteTable("friendships", {
 });
 
 /* ================================
+   FRIEND REQUESTS TABLE
+   ================================ */
+export const friendRequests = sqliteTable("friend_requests", {
+  id: text("id").primaryKey(),                     // UUID
+  senderId: text("sender_id").notNull(),           // Hvem som sender forespørselen
+  receiverId: text("receiver_id").notNull(),       // Hvem som mottar forespørselen
+  status: text("status").notNull().default("pending"), // "pending", "accepted", "rejected"
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP"),
+  updatedAt: text("updated_at"),
+});
+
+/* ================================
    NOTES TABLE
    ================================ */
 export const notes = sqliteTable("notes", {
@@ -68,6 +89,13 @@ export const notes = sqliteTable("notes", {
   updatedAt: text("updated_at"),
 });
 
-export const schema = drizzle({
-  // Define your tables and columns here
+/* ================================
+   USER SETTINGS TABLE
+   ================================ */
+export const userSettings = sqliteTable("user_settings", {
+  userId: text("user_id").primaryKey(),
+  theme: text("theme").default("dark"),            // "dark" / "light"
+  language: text("language").default("no"),        // "no" / "en"
+  notifications: integer("notifications").default(1), // 0 = off, 1 = on
+  updatedAt: text("updated_at").default("CURRENT_TIMESTAMP"),
 });

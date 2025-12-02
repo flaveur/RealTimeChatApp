@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/Button";
+import "./notes.css";
 
 
 interface Note {
@@ -79,65 +80,95 @@ export default function NotesPage() {
 
   if (loading) {
     return (
-      <main className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-3xl p-4 sm:p-8 shadow-sm transition-colors">
-        <p className="text-gray-500 dark:text-gray-400 text-center">Laster notater...</p>
-      </main>
+      <div className="notes-container">
+        <main className="notes-main">
+          <div className="notes-content">
+            <p className="notes-loading">Laster notater...</p>
+          </div>
+        </main>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex">
-      <aside className="hidden md:block w-72 p-4 border-r">
-
-      </aside>
-
-      <main className="flex-1 p-6">
-        <main className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm transition-colors pb-6 md:pb-8">
-          <header className="mb-4 md:mb-6">
-            <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mb-1">Mine notater</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Opprett, søk og administrer dine notater</p>
+    <div className="notes-container">
+      <main className="notes-main">
+        <div className="notes-content">
+          <header className="notes-header">
+            <h1 className="notes-title">Mine notater</h1>
+            <p className="notes-subtitle">Opprett, søk og administrer dine notater</p>
           </header>
 
           {error && (
-            <aside className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+            <aside className="notes-error" role="alert">
               {error}
             </aside>
           )}
 
-          <section aria-label="Søk etter notater" className="mb-4 md:mb-6">
+          <section aria-label="Søk etter notater" className="notes-search-section">
             <form role="search">
               <label htmlFor="search" className="sr-only">Søk i notater</label>
-              <input id="search" type="search" placeholder="Søk i notater..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 outline-none text-base" />
+              <input 
+                id="search" 
+                type="search" 
+                placeholder="Søk i notater..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                className="notes-search-input"
+              />
             </form>
           </section>
 
-          <section aria-label="Legg til nytt notat" className="mb-6 md:mb-8">
-            <form onSubmit={handleAddNote} className="flex flex-col gap-3">
+          <section aria-label="Legg til nytt notat" className="notes-add-section">
+            <form onSubmit={handleAddNote} className="notes-add-form">
               <label htmlFor="newNote" className="sr-only">Nytt notat</label>
-              <textarea id="newNote" placeholder="Skriv et nytt notat..." value={newNote} onChange={(e) => setNewNote(e.target.value)} rows={3} className="w-full resize-none px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 outline-none text-base" />
-              <Button type="submit" disabled={!newNote.trim()} className="self-end">Legg til</Button>
+              <textarea 
+                id="newNote" 
+                placeholder="Skriv et nytt notat..." 
+                value={newNote} 
+                onChange={(e) => setNewNote(e.target.value)} 
+                rows={3} 
+                className="notes-textarea"
+              />
+              <button 
+                type="submit" 
+                disabled={!newNote.trim()} 
+                className="notes-btn notes-btn-primary self-end"
+              >
+                Legg til
+              </button>
             </form>
           </section>
 
-          <section aria-label="Liste over notater">
+          <section aria-label="Liste over notater" className="notes-list-section">
             {filteredNotes.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-sm">{notes.length === 0 ? "Du har ingen notater ennå." : "Ingen notater samsvarer med søket."}</p>
+              <p className="notes-empty">
+                {notes.length === 0 ? "Du har ingen notater ennå." : "Ingen notater samsvarer med søket."}
+              </p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="notes-list">
                 {filteredNotes.map((note) => (
-                  <li key={note.id} className="group flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                    <article className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-1">{note.title}</h3>
-                      {note.content && <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line break-words">{note.content}</p>}
-                      <time className="text-xs text-gray-500 dark:text-gray-500 mt-2 block">{new Date(note.createdAt).toLocaleString("no-NO")}</time>
+                  <li key={note.id} className="note-item">
+                    <article className="note-content">
+                      <h3 className="note-title">{note.title}</h3>
+                      {note.content && <p className="note-body">{note.content}</p>}
+                      <time className="note-time">{new Date(note.createdAt).toLocaleString("no-NO")}</time>
                     </article>
-                    <Button type="button" variant="danger" onClick={() => handleDelete(note.id)} className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity self-end sm:self-start">Slett</Button>
+                    <div className="note-actions">
+                      <button 
+                        type="button" 
+                        onClick={() => handleDelete(note.id)} 
+                        className="notes-btn notes-btn-danger"
+                      >
+                        Slett
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </section>
-        </main>
+        </div>
       </main>
     </div>
   );
