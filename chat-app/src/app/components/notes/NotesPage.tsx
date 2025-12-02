@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/Button";
-import Sidebar from "@/app/components/Sidebar";
+
 
 interface Note {
   id: string;
@@ -88,7 +88,7 @@ export default function NotesPage() {
   return (
     <div className="min-h-screen flex">
       <aside className="hidden md:block w-72 p-4 border-r">
-        <Sidebar />
+
       </aside>
 
       <main className="flex-1 p-6">

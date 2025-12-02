@@ -1,5 +1,8 @@
+"use client";
+
 import "@/app/styles.css";
 import MessagesPage from "@/app/components/messages/MessagesPage";
+import Sidebar from "@/app/components/Sidebar/Sidebar";
 
 export default function Messages() {
   return (
