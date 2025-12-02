@@ -28,7 +28,11 @@ export async function getFriends(request: Request, db: any) {
       })
     );
 
-    return Response.json({ friends: friendsList });
+    const uniqueFriends = Array.from(
+      new Map(friendsList.map(f => [f.id, f])).values()
+    );
+
+    return Response.json({ friends: uniqueFriends });
   } catch (error) {
     console.error("Feil ved henting av venner:", error);
     return Response.json({ error: "Kunne ikke hente venner" }, { status: 500 });
