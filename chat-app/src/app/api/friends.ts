@@ -16,20 +16,28 @@ export async function getFriends(request: Request, db: any) {
 
     const friendsList = await Promise.all(
       allFriendships.map(async (f: any) => {
-        const friendId = f.userId === auth.userId ? f.friendId : f.userId;
+        // Drizzle kan returnere snake_case eller camelCase
+        const fUserId = f.userId ?? f.user_id;
+        const fFriendId = f.friendId ?? f.friend_id;
+        const friendId = fUserId === auth.userId ? fFriendId : fUserId;
+        
+        // Filtrer ut seg selv
+        if (friendId === auth.userId) return null;
+        
         const friendData = await getUserData(db, friendId);
         return { 
           id: friendId,
           username: friendData?.username,
           displayName: friendData?.displayName,
           status: friendData?.status || "offline",
-          createdAt: f.createdAt
+          createdAt: f.createdAt ?? f.created_at
         };
       })
     );
 
+    // Filtrer ut null-verdier (seg selv) og lag unik liste
     const uniqueFriends = Array.from(
-      new Map(friendsList.map(f => [f.id, f])).values()
+      new Map(friendsList.filter(f => f !== null).map(f => [f.id, f])).values()
     );
 
     return Response.json({ friends: uniqueFriends });
@@ -238,15 +246,11 @@ export async function acceptFriendRequest(request: Request, db: any, d1: D1Datab
       `UPDATE friend_requests SET status = 'accepted', updated_at = ? WHERE id = ?`
     ).bind(new Date().toISOString(), requestId).run();
 
-    // Opprett vennskap i BEGGE retninger
+    // Opprett vennskap (kun én rad - spørringen håndterer begge retninger)
     const now = new Date().toISOString();
     await d1.prepare(
       `INSERT INTO friendships (user_id, friend_id, created_at) VALUES (?, ?, ?)`
     ).bind(senderId, receiverId, now).run();
-    
-    await d1.prepare(
-      `INSERT INTO friendships (user_id, friend_id, created_at) VALUES (?, ?, ?)`
-    ).bind(receiverId, senderId, now).run();
 
     console.log("Friendship created between", senderId, "and", receiverId);
 
