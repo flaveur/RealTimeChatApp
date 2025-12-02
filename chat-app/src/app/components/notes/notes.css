@@ -1,31 +1,14 @@
 /* Notes CSS - Manual Tailwind styles without @apply */
-/* Supports both light and dark mode */
 
 .notes-container {
-  height: 100%;
+  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  background-color: rgb(248 250 252);
-  transition: background-color 0.2s ease;
-  overflow: hidden;
-}
-
-html.dark .notes-container {
   background-color: rgb(3 7 18);
 }
 
 .notes-main {
   flex: 1 1 0%;
   padding: 1rem;
-  overflow-y: auto;
-  min-height: 0;
-  /* Skjul scrollbar men behold scroll-funksjonalitet på mobil */
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.notes-main::-webkit-scrollbar {
-  display: none;
 }
 
 @media (min-width: 640px) {
@@ -34,48 +17,16 @@ html.dark .notes-container {
   }
 }
 
-@media (min-width: 768px) {
-  /* Vis scrollbar på desktop */
-  .notes-main {
-    -ms-overflow-style: auto;
-    scrollbar-width: auto;
-  }
-  
-  .notes-main::-webkit-scrollbar {
-    display: block;
-    width: 8px;
-  }
-  
-  .notes-main::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .notes-main::-webkit-scrollbar-thumb {
-    background: rgb(156 163 175);
-    border-radius: 4px;
-  }
-  
-  html.dark .notes-main::-webkit-scrollbar-thumb {
-    background: rgb(75 85 99);
-  }
-}
-
 .notes-content {
   width: 100%;
   max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
-  background-color: white;
-  border: 1px solid rgb(229 231 235);
+  background-color: rgb(17 24 39);
+  border: 1px solid rgb(31 41 55);
   border-radius: 0.5rem;
   padding: 1rem 1.5rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-html.dark .notes-content {
-  background-color: rgb(17 24 39);
-  border: 1px solid rgb(31 41 55);
 }
 
 @media (min-width: 640px) {
@@ -105,12 +56,8 @@ html.dark .notes-content {
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 600;
-  color: rgb(17 24 39);
-  margin-bottom: 0.25rem;
-}
-
-html.dark .notes-title {
   color: white;
+  margin-bottom: 0.25rem;
 }
 
 @media (min-width: 768px) {
@@ -123,28 +70,18 @@ html.dark .notes-title {
 .notes-subtitle {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: rgb(107 114 128);
-}
-
-html.dark .notes-subtitle {
   color: rgb(156 163 175);
 }
 
 .notes-error {
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background-color: rgb(254 226 226);
-  border: 1px solid rgb(248 113 113);
-  border-radius: 0.5rem;
-  color: rgb(185 28 28);
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
-html.dark .notes-error {
   background-color: rgb(127 29 29 / 0.3);
   border: 1px solid rgb(153 27 27);
+  border-radius: 0.5rem;
   color: rgb(252 165 165);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 .notes-search-section {
@@ -161,27 +98,16 @@ html.dark .notes-error {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(209 213 219);
-  background-color: rgb(249 250 251);
-  color: rgb(17 24 39);
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55);
+  color: white;
   font-size: 1rem;
   line-height: 1.5rem;
   outline: 2px solid transparent;
   outline-offset: 2px;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-html.dark .notes-search-input {
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55);
-  color: white;
 }
 
 .notes-search-input::placeholder {
-  color: rgb(156 163 175);
-}
-
-html.dark .notes-search-input::placeholder {
   color: rgb(107 114 128);
 }
 
@@ -215,27 +141,16 @@ html.dark .notes-search-input::placeholder {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(209 213 219);
-  background-color: rgb(249 250 251);
-  color: rgb(17 24 39);
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55);
+  color: white;
   font-size: 1rem;
   line-height: 1.5rem;
   outline: 2px solid transparent;
   outline-offset: 2px;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-html.dark .notes-input {
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55);
-  color: white;
 }
 
 .notes-input::placeholder {
-  color: rgb(156 163 175);
-}
-
-html.dark .notes-input::placeholder {
   color: rgb(107 114 128);
 }
 
@@ -248,27 +163,16 @@ html.dark .notes-input::placeholder {
   resize: none;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(209 213 219);
-  background-color: rgb(249 250 251);
-  color: rgb(17 24 39);
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55);
+  color: white;
   font-size: 1rem;
   line-height: 1.5rem;
   outline: 2px solid transparent;
   outline-offset: 2px;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-html.dark .notes-textarea {
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55);
-  color: white;
 }
 
 .notes-textarea::placeholder {
-  color: rgb(156 163 175);
-}
-
-html.dark .notes-textarea::placeholder {
   color: rgb(107 114 128);
 }
 
@@ -323,16 +227,12 @@ html.dark .notes-textarea::placeholder {
 }
 
 .notes-empty {
-  color: rgb(107 114 128);
+  color: rgb(156 163 175);
   font-size: 0.875rem;
   line-height: 1.25rem;
   text-align: center;
   padding-top: 1rem;
   padding-bottom: 1rem;
-}
-
-html.dark .notes-empty {
-  color: rgb(156 163 175);
 }
 
 .notes-list {
@@ -350,16 +250,11 @@ html.dark .notes-empty {
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(229 231 235);
-  background-color: rgb(249 250 251 / 0.5);
-  transition-property: background-color, border-color;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-html.dark .note-item {
   border: 1px solid rgb(55 65 81);
   background-color: rgb(31 41 55 / 0.5);
+  transition-property: background-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
 @media (min-width: 640px) {
@@ -371,10 +266,6 @@ html.dark .note-item {
 }
 
 .note-item:hover {
-  background-color: rgb(243 244 246);
-}
-
-html.dark .note-item:hover {
   background-color: rgb(31 41 55);
 }
 
@@ -385,36 +276,24 @@ html.dark .note-item:hover {
 
 .note-title {
   font-weight: 500;
-  color: rgb(17 24 39);
-  margin-bottom: 0.25rem;
-}
-
-html.dark .note-title {
   color: white;
+  margin-bottom: 0.25rem;
 }
 
 .note-body {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: rgb(107 114 128);
+  color: rgb(156 163 175);
   white-space: pre-line;
   word-wrap: break-word;
-}
-
-html.dark .note-body {
-  color: rgb(156 163 175);
 }
 
 .note-time {
   font-size: 0.75rem;
   line-height: 1rem;
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   margin-top: 0.5rem;
   display: block;
-}
-
-html.dark .note-time {
-  color: rgb(107 114 128);
 }
 
 .note-actions {
@@ -437,16 +316,12 @@ html.dark .note-time {
 }
 
 .notes-loading {
-  color: rgb(107 114 128);
+  color: rgb(156 163 175);
   text-align: center;
   font-size: 0.875rem;
   line-height: 1.25rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
-}
-
-html.dark .notes-loading {
-  color: rgb(156 163 175);
 }
 
 .sr-only {

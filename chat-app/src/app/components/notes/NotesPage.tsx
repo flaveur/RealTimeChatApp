@@ -14,7 +14,8 @@ interface Note {
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [newNote, setNewNote] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,19 +45,23 @@ export default function NotesPage() {
 
   async function handleAddNote(e: React.FormEvent) {
     e.preventDefault();
-    if (!newNote.trim()) return;
+    if (!newTitle.trim()) {
+      alert("Tittel er nødvendig");
+      return;
+    }
 
     try {
       const res = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newNote.trim(), content: "" }),
+        body: JSON.stringify({ title: newTitle.trim(), content: newContent.trim() }),
         credentials: "same-origin",
       });
 
       if (!res.ok) throw new Error("Kunne ikke opprette notat");
       await fetchNotes();
-      setNewNote("");
+      setNewTitle("");
+      setNewContent("");
     } catch (err: any) {
       alert(err.message);
     }
@@ -121,18 +126,34 @@ export default function NotesPage() {
 
           <section aria-label="Legg til nytt notat" className="notes-add-section">
             <form onSubmit={handleAddNote} className="notes-add-form">
-              <label htmlFor="newNote" className="sr-only">Nytt notat</label>
-              <textarea 
-                id="newNote" 
-                placeholder="Skriv et nytt notat..." 
-                value={newNote} 
-                onChange={(e) => setNewNote(e.target.value)} 
-                rows={3} 
-                className="notes-textarea"
-              />
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="newTitle" className="sr-only">Tittel på notat</label>
+                  <input 
+                    id="newTitle" 
+                    type="text"
+                    placeholder="Tittel på notatet..." 
+                    value={newTitle} 
+                    onChange={(e) => setNewTitle(e.target.value)} 
+                    className="notes-input"
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="newContent" className="sr-only">Innhold i notat</label>
+                  <textarea 
+                    id="newContent" 
+                    placeholder="Skriv notatet ditt her..." 
+                    value={newContent} 
+                    onChange={(e) => setNewContent(e.target.value)} 
+                    rows={4} 
+                    className="notes-textarea"
+                  />
+                </div>
+              </div>
               <button 
                 type="submit" 
-                disabled={!newNote.trim()} 
+                disabled={!newTitle.trim()} 
                 className="notes-btn notes-btn-primary self-end"
               >
                 Legg til

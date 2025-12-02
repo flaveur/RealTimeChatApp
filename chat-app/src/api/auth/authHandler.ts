@@ -151,7 +151,7 @@ export async function loginHandler(context: any): Promise<Response> {
 
     if (!user) {
       // Feil brukernavn/passord (401 Unauthorized)
-      return new Response(JSON.stringify({ error: 'invalid_credentials' }), {
+      return new Response(JSON.stringify({ error: 'Feil brukernavn eller passord' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });

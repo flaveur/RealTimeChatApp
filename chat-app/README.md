@@ -171,9 +171,9 @@ Eller se hva terminalen gir.
 
 - Når man har kjørt pnpm seed:demo, så får man inn to brukere å velge mellom
 
-- Man kan logge inn på Demo Bruker og legge Test bruker til som venn ved å søke brukeren opp i vennelista.
+- Man kan logge inn på Demo Bruker og chatte med test bruker.
 
-- Etter man har gjort det, kan man logge ut av Demo, og deretter logge seg inn på Test bruker.
+- Etter man har gjort det, kan man logge ut av Demo, og deretter lage seg en ny bruker
 
 - Med Test bruker kan man legge Demo til som venn, og deretter teste meldingsfunksjonen. 
 

@@ -59,6 +59,6 @@ VALUES (1, 2, 'Ja, den støtter meldinger, venner og notater!', datetime('now', 
 
 run();
 
-/*seed script for D1 database med Wrangler
+/*Seed script for D1 database med Wrangler
 
-Hele scriptet er skrevet GitHub Copilot. */
+Hele scriptet er skrevet av GitHub Copilot. */
