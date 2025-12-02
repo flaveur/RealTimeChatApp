@@ -143,14 +143,14 @@ export default function MessagesPageComponent() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-gray-950">
+      <div className="flex h-full items-center justify-center bg-gray-950">
         <p className="text-gray-400">Laster meldinger...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-gray-950">
+    <div className="flex h-full bg-gray-950">
       <div className="w-64 border-r border-gray-800 flex flex-col bg-gray-900/50">
         <div className="px-4 py-3 border-b border-gray-800">
           <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-widest">Samtaler</h2>

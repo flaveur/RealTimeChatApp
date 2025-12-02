@@ -9,6 +9,7 @@ export const users = sqliteTable('users', {
   displayName: text('display_name'),
   password: text('password'),
   status: text('status').default('offline'),       // "online", "busy", "away", "offline"
+  statusText: text('status_text'),                 // Custom status text like "Hva driver du med?"
   avatarUrl: text('avatar_url'),
   createdAt: text('created_at').default('CURRENT_TIMESTAMP'),
 });

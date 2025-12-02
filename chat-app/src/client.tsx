@@ -1,8 +1,13 @@
 import { initClient, initClientNavigation } from "rwsdk/client";
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { applyTheme, subscribe as subscribeTheme } from "@/app/lib/theme";
 
 initClient();
+
+// Appliser tema ved oppstart og lytt på endringer
+applyTheme();
+subscribeTheme(() => applyTheme());
 
 // Use rwsdk client navigation to re-run mounts after internal navigation
 // Note: Sidebar should be included by pages that need it (not mounted globally here).

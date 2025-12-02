@@ -1,23 +1,35 @@
-﻿{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "chat-app",
-  "main": "src/worker.tsx",
-  "compatibility_date": "2025-08-21",
-  "compatibility_flags": ["nodejs_compat"],
-
-  "assets": { 
-    "binding": "ASSETS",
-    "directory": "./dist/client"
-  },
-
-  "observability": { "enabled": true },
-  "vars": {},
-
-  "d1_databases": [
-    {
-      "binding": "chat_appd1",
-      "database_name": "chat-appd1",
-      "database_id": "33f000ab-95ec-4447-9803-796f29f68f1d"
-    }
-  ]
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "chat-app",
+	"main": "src/worker.tsx",
+	"compatibility_date": "2025-08-21",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./dist/client"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"vars": {},
+	"d1_databases": [
+		{
+			"binding": "chat_appd1",
+			"database_name": "chat-appd1",
+			"database_id": "33f000ab-95ec-4447-9803-796f29f68f1d"
+		}
+	],
+	"r2_buckets": [
+		{
+			"bucket_name": "chat-app-avatars",
+			"binding": "R2"
+		},
+		{
+			"bucket_name": "chat-app-avatars",
+			"binding": "chat_app_avatars",
+			"remote": true
+		}
+	]
 }

@@ -13,6 +13,7 @@ import { logoutHandler } from "./api/auth/logoutHandler";
 import { friendsController } from "./api/friends/friendsController";
 import { notesController } from "./api/notes/notesController";
 import { settingsController } from "./api/settings/settingsController";
+import { uploadController } from "./api/upload/uploadController";
 import Login from "@/app/pages/Login";
 import Register from "@/app/pages/Register";
 import Messages from "@/app/pages/Messages";
@@ -40,6 +41,7 @@ export default {
       route("/api/me", settingsController as any),
       route("/api/me/name", settingsController as any),
       route("/api/me/status", settingsController as any),
+      route("/api/me/status-text", settingsController as any),
       route("/api/me/avatar", settingsController as any),
       prefix("/api/settings", [
         route("*", settingsController as any),
@@ -52,6 +54,9 @@ export default {
       ]),
       prefix("/api/notes", [
         route("*", notesController as any),
+      ]),
+      prefix("/api/upload", [
+        route("*", uploadController as any),
       ]),
       render(Document, [
         route("/", Login),

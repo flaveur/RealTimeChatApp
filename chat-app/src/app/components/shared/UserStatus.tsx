@@ -1,37 +1,25 @@
 'use client';
 
 import "./UserStatus.css";
-import { useEffect, useState } from 'react';
-
-interface User {
-  id: number;
-  username: string;
-  name?: string;
-  status: string;
-  avatarUrl?: string;
-}
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { rwsdk, type Status } from "@/app/lib/rwsdk";
 
 export default function UserStatus() {
-  const [me, setMe] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!rwsdk.auth.isInitialized());
+  
+  // Lytt på endringer i rwsdk state
+  const me = useSyncExternalStore(
+    rwsdk.auth.onChange,
+    () => rwsdk.auth.useCurrentUser(),
+    () => rwsdk.auth.useCurrentUser()
+  );
 
+  // Hent brukerdata ved oppstart hvis ikke allerede hentet
   useEffect(() => {
-    loadUser();
-  }, []);
-
-  async function loadUser() {
-    try {
-      const res = await fetch("/api/me", { credentials: "same-origin" });
-      if (res.ok) {
-        const data = await res.json();
-        setMe(data);
-      }
-    } catch (err) {
-      console.error("Feil ved henting av bruker:", err);
-    } finally {
-      setLoading(false);
+    if (!rwsdk.auth.isInitialized()) {
+      rwsdk.auth.fetchCurrentUser().finally(() => setLoading(false));
     }
-  }
+  }, []);
 
   if (loading) {
     return (
@@ -45,7 +33,7 @@ export default function UserStatus() {
     );
   }
 
-  const labels: Record<string, string> = {
+  const labels: Record<Status, string> = {
     online: 'Tilgjengelig',
     busy: 'Opptatt',
     away: 'Borte',
@@ -74,7 +62,10 @@ export default function UserStatus() {
 
       <article className="userstatus-content">
         <h2 className="userstatus-name">{me.name || me.username}</h2>
-        <p className="userstatus-label">{labels[me.status] || me.status}</p>
+        <p className="userstatus-label">
+          {labels[me.status] || me.status}
+          {me.statusText && <span className="userstatus-text"> · {me.statusText}</span>}
+        </p>
       </article>
     </section>
   );

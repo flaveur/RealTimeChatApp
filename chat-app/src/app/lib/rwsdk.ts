@@ -6,20 +6,39 @@ export type Status = "online" | "busy" | "away" | "offline";
 type User = {
   id: string;
   name: string;
+  username?: string;
   avatarUrl?: string | null;
-  status?: Status;
+  statusText?: string | null;
+  status: Status;
 };
 
 const listeners: Array<() => void> = [];
 
 const state = {
   currentUser: null as User | null,
+  initialized: false,
+  // Snapshot for useSyncExternalStore - ny referanse ved hver endring
+  snapshot: null as User | null,
 };
+
+function notifyListeners() {
+  // Lag en ny snapshot-referanse slik at useSyncExternalStore oppdager endringen
+  state.snapshot = state.currentUser ? { ...state.currentUser } : null;
+  listeners.forEach((l) => l());
+}
 
 export const rwsdk = {
   auth: {
     useCurrentUser() {
+      // Returner snapshot for useSyncExternalStore-kompatibilitet
+      return state.snapshot;
+    },
+    // Direkte tilgang til currentUser (for ikke-reaktiv bruk)
+    getCurrentUser() {
       return state.currentUser;
+    },
+    isInitialized() {
+      return state.initialized;
     },
     onChange(cb: () => void) {
       listeners.push(cb);
@@ -28,44 +47,91 @@ export const rwsdk = {
         if (idx >= 0) listeners.splice(idx, 1);
       };
     },
+    // Hent brukerdata fra API
+    async fetchCurrentUser() {
+      try {
+        const res = await fetch("/api/me", { credentials: "same-origin" });
+        if (res.ok) {
+          const data = await res.json();
+          state.currentUser = {
+            id: data.id,
+            name: data.name || data.username,
+            username: data.username,
+            avatarUrl: data.avatarUrl,
+            statusText: data.statusText,
+            status: data.status || "offline",
+          };
+          state.initialized = true;
+          // Oppdater snapshot og notify
+          state.snapshot = { ...state.currentUser };
+          notifyListeners();
+          return state.currentUser;
+        }
+      } catch (error) {
+        console.error("Failed to fetch current user:", error);
+      }
+      state.initialized = true;
+      state.snapshot = null;
+      return null;
+    },
+    // Oppdater lokal state og notify listeners
+    updateLocalUser(updates: Partial<User>) {
+      if (state.currentUser) {
+        state.currentUser = { ...state.currentUser, ...updates };
+        notifyListeners();
+      }
+    },
     async setStatus(s: Status) {
       try {
         const res = await fetch("/api/me/status", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: s }),
+          credentials: "same-origin",
         });
         if (!res.ok) return { ok: false, error: "Failed to update status" };
         
-        if (state.currentUser) state.currentUser.status = s;
-        listeners.forEach((l) => l());
+        if (state.currentUser) {
+          state.currentUser.status = s;
+          notifyListeners();
+        }
         return { ok: true };
       } catch (error) {
         return { ok: false, error: String(error) };
       }
     },
-    async updateName(name: string) {
+    async setStatusText(statusText: string) {
       try {
-        const res = await fetch("/api/me/name", {
+        const res = await fetch("/api/me/status-text", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
+          body: JSON.stringify({ statusText }),
+          credentials: "same-origin",
         });
         if (!res.ok) {
-          const data = await res.json();
-          return { ok: false, error: data.error || "Failed to update name" };
+          const data = await res.json() as { error?: string };
+          return { ok: false, error: data.error || "Failed to update status text" };
         }
         
-        if (state.currentUser) state.currentUser.name = name;
-        listeners.forEach((l) => l());
+        if (state.currentUser) {
+          state.currentUser.statusText = statusText || null;
+          notifyListeners();
+        }
         return { ok: true };
       } catch (error) {
         return { ok: false, error: String(error) };
       }
     },
-    async updateAvatar(file: File) {
-      // Avatar opplasting er ikke implementert ennå
-      return { ok: true };
+    async updateAvatar(avatarUrl: string) {
+      try {
+        if (state.currentUser) {
+          state.currentUser.avatarUrl = avatarUrl;
+          notifyListeners();
+        }
+        return { ok: true };
+      } catch (error) {
+        return { ok: false, error: String(error) };
+      }
     },
   },
   // Minimal chat API shim

@@ -1,4 +1,4 @@
-import { getSettings, updateSettings, updateName, updateStatus, updateAvatar, getCurrentUser } from "../../app/api/settings";
+import { getSettings, updateSettings, updateName, updateStatus, updateAvatar, updateStatusText, getCurrentUser } from "../../app/api/settings";
 import { getEnv } from '../../lib/env';
 import { getDb } from '../../lib/db.server';
 
@@ -28,6 +28,11 @@ export async function settingsController(context: any): Promise<Response> {
   // PUT /api/me/avatar - oppdater profilbilde
   if (request.method === "PUT" && pathname === "/api/me/avatar") {
     return updateAvatar(request, db);
+  }
+
+  // PUT /api/me/status-text - oppdater statustekst
+  if (request.method === "PUT" && pathname === "/api/me/status-text") {
+    return updateStatusText(request, db);
   }
 
   // GET /api/settings - hent settings

@@ -101,8 +101,20 @@ html.dark .userstatus-name {
   font-size: 0.75rem;
   color: #64748b;
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
 }
 
 html.dark .userstatus-label {
   color: #94a3b8;
+}
+
+.userstatus-text {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+html.dark .userstatus-text {
+  color: #6b7280;
 }

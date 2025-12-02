@@ -196,6 +196,38 @@ export async function updateAvatar(request: Request, db: any): Promise<Response>
 }
 
 /**
+ * PUT /api/me/status-text - Oppdater brukerens statustekst (egendefinert melding)
+ */
+export async function updateStatusText(request: Request, db: any): Promise<Response> {
+  const auth = await authenticateUser(request, db);
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body: any = await request.json();
+    const { statusText } = body;
+
+    // Tillat tom streng for å fjerne statustekst, men begrens lengden
+    const text = statusText?.trim() ?? "";
+    if (text.length > 100) {
+      return Response.json({ error: "Statustekst kan være maks 100 tegn" }, { status: 400 });
+    }
+
+    await db
+      .update(users)
+      .set({ statusText: text || null })
+      .where(eq(users.id, auth.userId))
+      .run();
+
+    return Response.json({ success: true, statusText: text || null });
+  } catch (error) {
+    console.error("Feil ved oppdatering av statustekst:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+/**
  * GET /api/me - Hent innlogget bruker
  */
 export async function getCurrentUser(request: Request, db: any): Promise<Response> {
@@ -221,7 +253,8 @@ export async function getCurrentUser(request: Request, db: any): Promise<Respons
       username: user.username,
       name: user.display_name ?? user.displayName ?? user.username,
       status: user.status ?? "offline",
-      avatarUrl: user.avatar_url ?? user.avatarUrl,
+      statusText: user.status_text ?? user.statusText ?? null,
+      avatarUrl: user.avatar_url ?? user.avatarUrl ?? null,
     });
   } catch (error) {
     console.error("Feil ved henting av bruker:", error);
