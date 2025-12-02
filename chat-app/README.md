@@ -78,27 +78,6 @@ pnpm install / pnpm i
 ```bash
 npx wrangler login
 ```
-Dette åpner en nettleser hvor du logger inn på Cloudflare-kontoen din.
-
-#### Opprett D1-database
-```bash
-npx wrangler d1 create chat-appd1
-```
-Kopier `database_id` fra output og oppdater `wrangler.jsonc`:
-```jsonc
-"d1_databases": [
-  {
-    "binding": "chat_appd1",
-    "database_name": "chat-appd1",
-    "database_id": "DIN_DATABASE_ID_HER"
-  }
-]
-```
-
-####  Opprett R2-bucket for profilbildene som brukes i webapplikasjonen
-```bash
-npx wrangler r2 bucket create chat-app-avatars
-```
 
 ### 4. Kjør database-migrasjoner
 ```bash
