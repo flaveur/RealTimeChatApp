@@ -63,7 +63,8 @@ export default function Sidebar() {
           className={getLinkClass("/friends")}
         >
           <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm6 1h-2.5a3.5 3.5 0 0 0-3 1.6 3.5 3.5 0 0 0-3-1.6H6c-2.2 0-4 1.8-4 4v2h2v-2c0-1.1.9-2 2-2h2.5c.83 0 1.54.4 2 1 .46-.6 1.17-1 2-1H18c1.1 0 2 .9 2 2v2h2v-2c0-2.2-1.8-4-4-4z" />
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M12 14c-4 0-6 2-6 4v4h12v-4c0-2-2-4-6-4z"/>
           </svg>
           Venneliste
         </a>
