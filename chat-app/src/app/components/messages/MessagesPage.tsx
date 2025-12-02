@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./messages.css";
 
 interface Friend {
@@ -34,6 +34,19 @@ export default function MessagesPageComponent() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Lukk menyen når man klikker utenfor
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     loadMe();
@@ -64,7 +77,7 @@ export default function MessagesPageComponent() {
       setLoading(true);
       const res = await fetch("/api/messages", { credentials: "same-origin" });
       if (!res.ok) throw new Error("Kunne ikke hente samtaler");
-      const data = await res.json();
+      const data = await res.json() as { conversations: Conversation[] };
       setConversations(data.conversations || []);
       
       if (data.conversations && data.conversations.length > 0 && activeId === null) {
@@ -81,7 +94,7 @@ export default function MessagesPageComponent() {
     try {
       const res = await fetch(`/api/messages/${friendId}`, { credentials: "same-origin" });
       if (!res.ok) throw new Error("Kunne ikke hente meldinger");
-      const data = await res.json();
+      const data = await res.json() as { messages: Message[]; friend: Friend };
       setMessages(data.messages || []);
       setActiveFriend(data.friend);
     } catch (err: any) {
@@ -120,6 +133,39 @@ export default function MessagesPageComponent() {
     } catch (err: any) {
       alert(err.message);
     }
+  }
+
+  async function handleRemoveFriend() {
+    if (!activeId || !activeFriend) return;
+    
+    const confirmRemove = confirm(`Er du sikker på at du vil fjerne ${activeFriend.displayName || activeFriend.username} som venn?`);
+    if (!confirmRemove) return;
+
+    try {
+      const res = await fetch("/api/friends/remove", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ friendId: String(activeId) }),
+        credentials: "same-origin",
+      });
+
+      if (!res.ok) throw new Error("Kunne ikke fjerne venn");
+      
+      setMenuOpen(false);
+      setActiveId(null);
+      setActiveFriend(null);
+      setMessages([]);
+      await loadConversations();
+      alert("Venn fjernet");
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  function handleMuteNotifications() {
+    // TODO: Implementer muting av notifikasjoner når vi har støtte for det
+    alert("Notifikasjoner dempet for denne samtalen");
+    setMenuOpen(false);
   }
 
   const getInitials = (name?: string, username?: string) => {
@@ -217,9 +263,48 @@ export default function MessagesPageComponent() {
                 )}
                 <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${getStatusColor(activeFriend.status)}`} />
               </figure>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-lg font-semibold text-white">{getDisplayName(activeFriend)}</h2>
                 <p className="text-xs text-gray-400 capitalize">{activeFriend.status}</p>
+              </div>
+              
+              {/* Dropdown meny */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
+                  aria-label="Meny"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="5" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="12" cy="19" r="2" />
+                  </svg>
+                </button>
+                
+                {menuOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
+                    <button
+                      onClick={handleMuteNotifications}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                      </svg>
+                      Demp notifikasjoner
+                    </button>
+                    <button
+                      onClick={handleRemoveFriend}
+                      className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                      </svg>
+                      Fjern venn
+                    </button>
+                  </div>
+                )}
               </div>
             </header>
 
