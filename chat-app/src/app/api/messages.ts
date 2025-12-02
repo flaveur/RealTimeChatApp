@@ -1,4 +1,4 @@
-import { eq, and, or, desc } from "drizzle-orm";
+import { eq, and, or, desc, isNull } from "drizzle-orm";
 import { messages, users, friendships } from "../../../drizzle/schema";
 import { authenticateUser, getUserData } from "./utils";
 
@@ -8,20 +8,32 @@ export async function getConversations(request: Request, db: any) {
     const auth = await authenticateUser(request, db);
     if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
-    // Hent alle venner
-    const friends = await db
-      .select({
-        friendId: friendships.friendId,
-      })
+    // Hent alle venner (sjekk begge retninger siden vi kun lagrer én rad per vennskap)
+    const allFriendships = await db
+      .select()
       .from(friendships)
-      .where(eq(friendships.userId, auth.userId))
+      .where(
+        or(
+          eq(friendships.userId, auth.userId),
+          eq(friendships.friendId, auth.userId)
+        )
+      )
       .all();
 
-    if (!friends || friends.length === 0) {
+    if (!allFriendships || allFriendships.length === 0) {
       return Response.json({ conversations: [] });
     }
 
-    const friendIds = friends.map((f: any) => f.friendId);
+    // Finn venn-IDer (den andre parten i vennskapet)
+    const friendIds = allFriendships.map((f: any) => {
+      const fUserId = f.userId ?? f.user_id;
+      const fFriendId = f.friendId ?? f.friend_id;
+      return fUserId === auth.userId ? fFriendId : fUserId;
+    }).filter((id: number) => id !== auth.userId); // Filtrer ut seg selv
+
+    if (friendIds.length === 0) {
+      return Response.json({ conversations: [] });
+    }
 
     // Hent brukerdata for alle venner
     const friendsData = await Promise.all(
@@ -57,7 +69,7 @@ export async function getConversations(request: Request, db: any) {
             and(
               eq(messages.senderId, friendId),
               eq(messages.receiverId, auth.userId),
-              eq(messages.readAt, null)
+              isNull(messages.readAt)
             )
           )
           .all();
@@ -90,14 +102,14 @@ export async function getConversation(request: Request, db: any, friendId: numbe
     const auth = await authenticateUser(request, db);
     if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
-    // Verifiser at de er venner
+    // Verifiser at de er venner (sjekk begge retninger)
     const friendship = await db
       .select()
       .from(friendships)
       .where(
-        and(
-          eq(friendships.userId, auth.userId),
-          eq(friendships.friendId, friendId)
+        or(
+          and(eq(friendships.userId, auth.userId), eq(friendships.friendId, friendId)),
+          and(eq(friendships.userId, friendId), eq(friendships.friendId, auth.userId))
         )
       )
       .all();
@@ -154,14 +166,14 @@ export async function sendMessage(request: Request, db: any) {
       return Response.json({ error: "Mangler mottaker eller innhold" }, { status: 400 });
     }
 
-    // Verifiser at de er venner
+    // Verifiser at de er venner (sjekk begge retninger)
     const friendship = await db
       .select()
       .from(friendships)
       .where(
-        and(
-          eq(friendships.userId, auth.userId),
-          eq(friendships.friendId, receiverId)
+        or(
+          and(eq(friendships.userId, auth.userId), eq(friendships.friendId, receiverId)),
+          and(eq(friendships.userId, receiverId), eq(friendships.friendId, auth.userId))
         )
       )
       .all();
@@ -201,7 +213,7 @@ export async function markAsRead(request: Request, db: any, friendId: number) {
         and(
           eq(messages.senderId, friendId),
           eq(messages.receiverId, auth.userId),
-          eq(messages.readAt, null)
+          isNull(messages.readAt)
         )
       );
 
