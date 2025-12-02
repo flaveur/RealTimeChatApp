@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS friendships (
 );
 
 CREATE TABLE IF NOT EXISTS friend_requests (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id TEXT PRIMARY KEY,
   sender_id INTEGER NOT NULL REFERENCES users(id),
   receiver_id INTEGER NOT NULL REFERENCES users(id),
   status TEXT NOT NULL DEFAULT 'pending',

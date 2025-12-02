@@ -26,11 +26,11 @@ export async function createNote(request: Request, db: any) {
   }
 
   const newNote = {
-    id: crypto.randomUUID(),
     userId: auth.userId,
     title: title.trim(),
     content: content?.trim() || "",
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   await db.insert(notes).values(newNote);

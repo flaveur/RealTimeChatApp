@@ -172,6 +172,7 @@ export async function sendFriendRequest(request: Request, db: any) {
     receiverId: friendId,
     status: "pending",
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   }).returning().all();
 
   return Response.json({ success: true, request: result[0] }, { status: 201 });
