@@ -1,14 +1,28 @@
-/* Friends CSS - Manual Tailwind styles without @apply */
-
 .friends-container {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
+  flex-direction: column;
+  background-color: rgb(248 250 252);
+  transition: background-color 0.2s ease;
+  overflow: hidden;
+}
+
+html.dark .friends-container {
   background-color: rgb(3 7 18);
 }
 
 .friends-main {
   flex: 1 1 0%;
   padding: 1rem;
+  overflow-y: auto;
+  min-height: 0;
+  /* Skjul scrollbar men behold scroll-funksjonalitet på mobil */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.friends-main::-webkit-scrollbar {
+  display: none;
 }
 
 @media (min-width: 640px) {
@@ -17,16 +31,99 @@
   }
 }
 
+@media (min-width: 768px) {
+  /* Vis scrollbar på desktop */
+  .friends-main {
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+  }
+  
+  .friends-main::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+  }
+  
+  .friends-main::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .friends-main::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175);
+    border-radius: 4px;
+  }
+  
+  html.dark .friends-main::-webkit-scrollbar-thumb {
+    background: rgb(75 85 99);
+  }
+}
+
+/* Tabs - vertikal layout på smale skjermer */
+.friends-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 400px) {
+  .friends-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.friends-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+.friends-tab.active {
+  background-color: rgb(37 99 235);
+  color: white;
+}
+
+.friends-tab.inactive {
+  background-color: rgb(243 244 246);
+  color: rgb(55 65 81);
+}
+
+html.dark .friends-tab.inactive {
+  background-color: rgb(55 65 81);
+  color: rgb(209 213 219);
+}
+
+.friends-tab.inactive:hover {
+  background-color: rgb(229 231 235);
+}
+
+html.dark .friends-tab.inactive:hover {
+  background-color: rgb(75 85 99);
+}
+
 .friends-content {
   width: 100%;
   max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
-  background-color: rgb(17 24 39);
-  border: 1px solid rgb(31 41 55);
+  background-color: white;
+  border: 1px solid rgb(229 231 235);
   border-radius: 0.5rem;
   padding: 1rem 1.5rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+html.dark .friends-content {
+  background-color: rgb(17 24 39);
+  border: 1px solid rgb(31 41 55);
 }
 
 @media (min-width: 640px) {
@@ -45,6 +142,10 @@
 .friends-header {
   margin-bottom: 1rem;
   padding-bottom: 1rem;
+  border-bottom: 1px solid rgb(229 231 235);
+}
+
+html.dark .friends-header {
   border-bottom: 1px solid rgb(31 41 55);
 }
 
@@ -58,8 +159,12 @@
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 600;
-  color: white;
+  color: rgb(17 24 39);
   margin-bottom: 0.25rem;
+}
+
+html.dark .friends-title {
+  color: white;
 }
 
 @media (min-width: 768px) {
@@ -72,43 +177,11 @@
 .friends-subtitle {
   font-size: 0.875rem;
   line-height: 1.25rem;
+  color: rgb(107 114 128);
+}
+
+html.dark .friends-subtitle {
   color: rgb(156 163 175);
-}
-
-.friends-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid rgb(31 41 55);
-}
-
-.friends-tab {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 500;
-  transition-property: color, background-color;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-  background: transparent;
-}
-
-.friends-tab.active {
-  background-color: rgb(37 99 235);
-  color: white;
-}
-
-.friends-tab.inactive {
-  color: rgb(156 163 175);
-}
-
-.friends-tab.inactive:hover {
-  color: rgb(209 213 219);
-  background-color: rgb(31 41 55);
 }
 
 .friends-search-section {
@@ -124,16 +197,27 @@
   flex: 1 1 0%;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55);
-  color: white;
+  border: 1px solid rgb(209 213 219);
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
   font-size: 0.875rem;
   line-height: 1.25rem;
   outline: 2px solid transparent;
   outline-offset: 2px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+html.dark .friends-search-input {
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55);
+  color: white;
 }
 
 .friends-search-input::placeholder {
+  color: rgb(156 163 175);
+}
+
+html.dark .friends-search-input::placeholder {
   color: rgb(107 114 128);
 }
 
@@ -173,19 +257,27 @@
   font-size: 0.875rem;
   line-height: 1.25rem;
   font-weight: 600;
-  color: rgb(209 213 219);
+  color: rgb(75 85 99);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.75rem;
+}
+
+html.dark .friends-results-title {
+  color: rgb(209 213 219);
 }
 
 .friends-empty {
   text-align: center;
   padding-top: 2rem;
   padding-bottom: 2rem;
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+html.dark .friends-empty {
+  color: rgb(156 163 175);
 }
 
 .friends-list {
@@ -203,14 +295,23 @@
   justify-content: space-between;
   padding: 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55 / 0.5);
-  transition-property: background-color;
+  border: 1px solid rgb(229 231 235);
+  background-color: rgb(249 250 251 / 0.5);
+  transition-property: background-color, border-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
+html.dark .friend-item {
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55 / 0.5);
+}
+
 .friend-item:hover {
+  background-color: rgb(243 244 246);
+}
+
+html.dark .friend-item:hover {
   background-color: rgb(31 41 55);
 }
 
@@ -247,7 +348,7 @@
 
 .friend-name {
   font-weight: 600;
-  color: white;
+  color: rgb(17 24 39);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -255,13 +356,21 @@
   line-height: 1.25rem;
 }
 
+html.dark .friend-name {
+  color: white;
+}
+
 .friend-username {
   font-size: 0.75rem;
   line-height: 1rem;
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+html.dark .friend-username {
+  color: rgb(156 163 175);
 }
 
 .friend-status {
@@ -274,10 +383,19 @@
 
 .friend-status.online {
   background-color: rgb(34 197 94 / 0.2);
+  color: rgb(22 163 74);
+}
+
+html.dark .friend-status.online {
   color: rgb(74 222 128);
 }
 
 .friend-status.offline {
+  background-color: rgb(229 231 235);
+  color: rgb(107 114 128);
+}
+
+html.dark .friend-status.offline {
   background-color: rgb(55 65 81);
   color: rgb(156 163 175);
 }
@@ -331,20 +449,38 @@
 }
 
 .friend-btn-secondary {
+  background-color: rgb(229 231 235);
+  color: rgb(55 65 81);
+}
+
+html.dark .friend-btn-secondary {
   background-color: rgb(55 65 81);
   color: rgb(209 213 219);
 }
 
 .friend-btn-secondary:hover {
+  background-color: rgb(209 213 219);
+}
+
+html.dark .friend-btn-secondary:hover {
   background-color: rgb(75 85 99);
 }
 
 .friend-btn-ghost {
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   background: transparent;
 }
 
+html.dark .friend-btn-ghost {
+  color: rgb(156 163 175);
+}
+
 .friend-btn-ghost:hover {
+  color: rgb(55 65 81);
+  background-color: rgb(243 244 246);
+}
+
+html.dark .friend-btn-ghost:hover {
   color: rgb(209 213 219);
   background-color: rgb(55 65 81);
 }
@@ -370,20 +506,30 @@
   text-align: center;
   padding-top: 2rem;
   padding-bottom: 2rem;
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+html.dark .friends-loading {
+  color: rgb(156 163 175);
 }
 
 .friends-error {
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background-color: rgb(127 29 29 / 0.3);
-  border: 1px solid rgb(153 27 27);
+  background-color: rgb(254 226 226);
+  border: 1px solid rgb(248 113 113);
   border-radius: 0.5rem;
-  color: rgb(252 165 165);
+  color: rgb(185 28 28);
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+html.dark .friends-error {
+  background-color: rgb(127 29 29 / 0.3);
+  border: 1px solid rgb(153 27 27);
+  color: rgb(252 165 165);
 }
 
 @media (max-width: 640px) {

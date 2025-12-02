@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Shared auth styles for Login and Register forms */
 .auth-page {
   @apply min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950 transition-colors;

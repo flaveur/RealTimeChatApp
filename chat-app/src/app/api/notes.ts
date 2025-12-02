@@ -9,7 +9,7 @@ export async function getNotes(request: Request, db: any) {
   const userNotes = await db
     .select()
     .from(notes)
-    .where(eq(notes.userId, auth.userId))
+    .where(eq(notes.userId, String(auth.userId)))
     .orderBy(desc(notes.createdAt))
     .all();
 
@@ -26,7 +26,8 @@ export async function createNote(request: Request, db: any) {
   }
 
   const newNote = {
-    userId: auth.userId,
+    id: crypto.randomUUID(),
+    userId: String(auth.userId),
     title: title.trim(),
     content: content?.trim() || "",
     createdAt: new Date().toISOString(),
@@ -46,7 +47,7 @@ export async function updateOrDeleteNote(request: Request, db: any, noteId: stri
     return Response.json({ error: "Notat ikke funnet" }, { status: 404 });
   }
   const note = existing[0] as any;
-  if (note.userId !== auth.userId) {
+  if (String(note.userId ?? note.user_id) !== String(auth.userId)) {
     return Response.json({ error: "Ikke autorisert" }, { status: 403 });
   }
 

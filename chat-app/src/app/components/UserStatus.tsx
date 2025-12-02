@@ -4,7 +4,7 @@ import { rwsdk, type Status } from "@/app/lib/rwsdk";
 import { useSyncExternalStore } from "react";
 
 export default function UserStatus() {
-  // Abonner på endringer i brukeren fra rwsdk
+  //endringer i brukerens status
   const me = useSyncExternalStore(
     rwsdk.auth.onChange,
     () => rwsdk.auth.useCurrentUser(),

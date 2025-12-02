@@ -1,3 +1,14 @@
+/**
+ * Hovedworker for applikasjonen - Cloudflare Workers entry point
+ * 
+ * Denne filen definerer all routing og middleware for applikasjonen.
+ * Den bruker RedwoodSDK sin defineApp-funksjon for å sette opp
+ * request-håndtering med React Server Components.
+ * 
+ * Kilde: RedwoodSDK dokumentasjon - Request Handling & Routing
+ * https://rwsdk.com/docs
+ */
+
 import { render, route, prefix, layout } from "rwsdk/router";
 import { defineApp } from "rwsdk/worker";
 
@@ -22,27 +33,43 @@ import Settings from "./app/pages/Settings";
 import Sidebar from "@/app/components/Sidebar/Sidebar";
 import Notes from "@/app/pages/Notes";
 
-export type AppContext = {};
-
-const originalDefineApp = defineApp;
-
+/**
+ * Cloudflare Worker fetch-handler
+ * Alle innkommende HTTP-requests går gjennom denne funksjonen
+ */
 export default {
   async fetch(request: Request, env: any, ctx: ExecutionContext) {
+    // Sett miljøvariabler tilgjengelig for hele applikasjonen
     setEnv(env);
     
-    const app = originalDefineApp<AppContext>([
+    /**
+     * defineApp setter opp routing-pipelinen
+     * Rekkefølgen er viktig: middleware først, deretter routes
+     * 
+     * Struktur:
+     * 1. Middleware (kjører på alle requests)
+     * 2. API-routes (prefix "/api/...")
+     * 3. Sidevisninger med render() for HTML-response
+     */
+    const app = defineApp([
+      // Middleware: Setter sikkerhetsheadere på alle responses
       setCommonHeaders(),
-      ({ ctx: appCtx }) => {
-        appCtx;
-      },
+      
+      // === API ROUTES ===
+      // Autentisering - registrering og innlogging
       route("/api/auth/register", registerHandler as any),
       route("/api/auth/login", loginHandler as any),
       route("/api/logout", logoutHandler as any),
+      
+      // Brukerinfo og innstillinger
       route("/api/me", settingsController as any),
       route("/api/me/name", settingsController as any),
       route("/api/me/status", settingsController as any),
       route("/api/me/status-text", settingsController as any),
       route("/api/me/avatar", settingsController as any),
+      
+      // Prefix-routes grupperer relaterte endepunkter
+      // Alle requests til /api/settings/* håndteres av settingsController
       prefix("/api/settings", [
         route("*", settingsController as any),
       ]),
@@ -58,11 +85,17 @@ export default {
       prefix("/api/upload", [
         route("*", uploadController as any),
       ]),
+      
+      // === SIDEVISNINGER ===
+      // render() wrapper sider med et Document-komponent (HTML-shell)
+      // Offentlige sider (krever ikke innlogging)
       render(Document, [
         route("/", Login),
         route("/login", Login),
         route("/register", Register),
       ]),
+      
+      // Beskyttede sider med MainLayout (sidebar + navigasjon)
       render(ApplicationDocument, [
         layout(MainLayout, [
           route("/messages", Messages),
@@ -72,6 +105,8 @@ export default {
           route("/sidebar", Sidebar),
         ]),
       ]),
+      
+      // Eksperimentell realtime-seksjon
       render(RealtimeDocument, [
         prefix("/app", [
           route(
@@ -82,6 +117,7 @@ export default {
       ]),
     ]);
     
+    // Returner response fra app-pipelinen
     return app.fetch(request, env, ctx);
   }
 };

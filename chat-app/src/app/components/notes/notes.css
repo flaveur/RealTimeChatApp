@@ -1,14 +1,31 @@
 /* Notes CSS - Manual Tailwind styles without @apply */
+/* Supports both light and dark mode */
 
 .notes-container {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
+  flex-direction: column;
+  background-color: rgb(248 250 252);
+  transition: background-color 0.2s ease;
+  overflow: hidden;
+}
+
+html.dark .notes-container {
   background-color: rgb(3 7 18);
 }
 
 .notes-main {
   flex: 1 1 0%;
   padding: 1rem;
+  overflow-y: auto;
+  min-height: 0;
+  /* Skjul scrollbar men behold scroll-funksjonalitet på mobil */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.notes-main::-webkit-scrollbar {
+  display: none;
 }
 
 @media (min-width: 640px) {
@@ -17,16 +34,48 @@
   }
 }
 
+@media (min-width: 768px) {
+  /* Vis scrollbar på desktop */
+  .notes-main {
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+  }
+  
+  .notes-main::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+  }
+  
+  .notes-main::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .notes-main::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175);
+    border-radius: 4px;
+  }
+  
+  html.dark .notes-main::-webkit-scrollbar-thumb {
+    background: rgb(75 85 99);
+  }
+}
+
 .notes-content {
   width: 100%;
   max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
-  background-color: rgb(17 24 39);
-  border: 1px solid rgb(31 41 55);
+  background-color: white;
+  border: 1px solid rgb(229 231 235);
   border-radius: 0.5rem;
   padding: 1rem 1.5rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+html.dark .notes-content {
+  background-color: rgb(17 24 39);
+  border: 1px solid rgb(31 41 55);
 }
 
 @media (min-width: 640px) {
@@ -56,8 +105,12 @@
   font-size: 1.25rem;
   line-height: 1.75rem;
   font-weight: 600;
-  color: white;
+  color: rgb(17 24 39);
   margin-bottom: 0.25rem;
+}
+
+html.dark .notes-title {
+  color: white;
 }
 
 @media (min-width: 768px) {
@@ -70,18 +123,28 @@
 .notes-subtitle {
   font-size: 0.875rem;
   line-height: 1.25rem;
+  color: rgb(107 114 128);
+}
+
+html.dark .notes-subtitle {
   color: rgb(156 163 175);
 }
 
 .notes-error {
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background-color: rgb(127 29 29 / 0.3);
-  border: 1px solid rgb(153 27 27);
+  background-color: rgb(254 226 226);
+  border: 1px solid rgb(248 113 113);
   border-radius: 0.5rem;
-  color: rgb(252 165 165);
+  color: rgb(185 28 28);
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+html.dark .notes-error {
+  background-color: rgb(127 29 29 / 0.3);
+  border: 1px solid rgb(153 27 27);
+  color: rgb(252 165 165);
 }
 
 .notes-search-section {
@@ -98,16 +161,27 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55);
-  color: white;
+  border: 1px solid rgb(209 213 219);
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
   font-size: 1rem;
   line-height: 1.5rem;
   outline: 2px solid transparent;
   outline-offset: 2px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+html.dark .notes-search-input {
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55);
+  color: white;
 }
 
 .notes-search-input::placeholder {
+  color: rgb(156 163 175);
+}
+
+html.dark .notes-search-input::placeholder {
   color: rgb(107 114 128);
 }
 
@@ -141,16 +215,27 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55);
-  color: white;
+  border: 1px solid rgb(209 213 219);
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
   font-size: 1rem;
   line-height: 1.5rem;
   outline: 2px solid transparent;
   outline-offset: 2px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+html.dark .notes-input {
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55);
+  color: white;
 }
 
 .notes-input::placeholder {
+  color: rgb(156 163 175);
+}
+
+html.dark .notes-input::placeholder {
   color: rgb(107 114 128);
 }
 
@@ -163,16 +248,27 @@
   resize: none;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55);
-  color: white;
+  border: 1px solid rgb(209 213 219);
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
   font-size: 1rem;
   line-height: 1.5rem;
   outline: 2px solid transparent;
   outline-offset: 2px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+html.dark .notes-textarea {
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55);
+  color: white;
 }
 
 .notes-textarea::placeholder {
+  color: rgb(156 163 175);
+}
+
+html.dark .notes-textarea::placeholder {
   color: rgb(107 114 128);
 }
 
@@ -227,12 +323,16 @@
 }
 
 .notes-empty {
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   font-size: 0.875rem;
   line-height: 1.25rem;
   text-align: center;
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+html.dark .notes-empty {
+  color: rgb(156 163 175);
 }
 
 .notes-list {
@@ -250,11 +350,16 @@
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(55 65 81);
-  background-color: rgb(31 41 55 / 0.5);
-  transition-property: background-color;
+  border: 1px solid rgb(229 231 235);
+  background-color: rgb(249 250 251 / 0.5);
+  transition-property: background-color, border-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+html.dark .note-item {
+  border: 1px solid rgb(55 65 81);
+  background-color: rgb(31 41 55 / 0.5);
 }
 
 @media (min-width: 640px) {
@@ -266,6 +371,10 @@
 }
 
 .note-item:hover {
+  background-color: rgb(243 244 246);
+}
+
+html.dark .note-item:hover {
   background-color: rgb(31 41 55);
 }
 
@@ -276,24 +385,36 @@
 
 .note-title {
   font-weight: 500;
-  color: white;
+  color: rgb(17 24 39);
   margin-bottom: 0.25rem;
+}
+
+html.dark .note-title {
+  color: white;
 }
 
 .note-body {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   white-space: pre-line;
   word-wrap: break-word;
+}
+
+html.dark .note-body {
+  color: rgb(156 163 175);
 }
 
 .note-time {
   font-size: 0.75rem;
   line-height: 1rem;
-  color: rgb(107 114 128);
+  color: rgb(156 163 175);
   margin-top: 0.5rem;
   display: block;
+}
+
+html.dark .note-time {
+  color: rgb(107 114 128);
 }
 
 .note-actions {
@@ -316,12 +437,16 @@
 }
 
 .notes-loading {
-  color: rgb(156 163 175);
+  color: rgb(107 114 128);
   text-align: center;
   font-size: 0.875rem;
   line-height: 1.25rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+html.dark .notes-loading {
+  color: rgb(156 163 175);
 }
 
 .sr-only {

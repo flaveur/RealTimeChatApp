@@ -26,18 +26,21 @@ export async function getConversations(request: Request, db: any) {
 
     // Finn venn-IDer (den andre parten i vennskapet)
     const friendIds = allFriendships.map((f: any) => {
-      const fUserId = f.userId ?? f.user_id;
-      const fFriendId = f.friendId ?? f.friend_id;
+      const fUserId = Number(f.userId ?? f.user_id);
+      const fFriendId = Number(f.friendId ?? f.friend_id);
       return fUserId === auth.userId ? fFriendId : fUserId;
     }).filter((id: number) => id !== auth.userId); // Filtrer ut seg selv
 
-    if (friendIds.length === 0) {
+    // Fjern duplikater
+    const uniqueFriendIds = [...new Set(friendIds)] as number[];
+
+    if (uniqueFriendIds.length === 0) {
       return Response.json({ conversations: [] });
     }
 
     // Hent brukerdata for alle venner
     const friendsData = await Promise.all(
-      friendIds.map(async (friendId: number) => {
+      uniqueFriendIds.map(async (friendId: number) => {
         const userData = await getUserData(db, friendId);
         
         // Hent siste melding i samtalen

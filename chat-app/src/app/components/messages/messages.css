@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 .messages-conversations-sidebar {
   @apply w-64 border-r border-gray-800 flex flex-col bg-gray-900/50;
 }

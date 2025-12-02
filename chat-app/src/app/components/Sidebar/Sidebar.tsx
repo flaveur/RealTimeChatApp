@@ -33,16 +33,16 @@ export default function Sidebar() {
     const isCurrentPage = isActive(path);
     return isCurrentPage
       ? `${baseClass} bg-blue-600 text-white hover:bg-blue-700`
-      : `${baseClass} text-gray-300 hover:bg-gray-800/50`;
+      : `${baseClass} text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50`;
   };
 
   return (
-    <aside className="w-56 border-r border-gray-800 flex flex-col bg-gray-950 py-4 flex-shrink-0">
-      <div className="px-4 mb-4 border border-gray-800 rounded-lg p-4 space-y-3">
+    <aside className="hidden md:flex w-56 border-r border-gray-200 dark:border-gray-800 flex-col bg-white dark:bg-gray-950 py-4 flex-shrink-0">
+      <div className="px-4 mb-4 border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-3">
         <UserStatus />
         <a
           href="/settings"
-          className="block w-full px-4 py-2 border border-gray-700 hover:border-gray-600 text-gray-300 hover:text-white text-sm font-medium rounded-lg transition text-center"
+          className="block w-full px-4 py-2 border border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium rounded-lg transition text-center"
         >
           Rediger profil
         </a>

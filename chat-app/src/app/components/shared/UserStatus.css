@@ -1,7 +1,13 @@
 /* UserStatus Component */
+/* Supports both light and dark mode */
+
 .userstatus-loading {
-  color: #94a3b8;
+  color: #64748b;
   font-size: 0.875rem;
+}
+
+html.dark .userstatus-loading {
+  color: #94a3b8;
 }
 
 .userstatus-root {
@@ -13,7 +19,7 @@
   background: white;
   padding: 1rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: colors 0.2s;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 html.dark .userstatus-root {
@@ -46,10 +52,6 @@ html.dark .userstatus-root {
   color: white;
   font-weight: 700;
   font-size: 1.125rem;
-}
-
-html.dark .userstatus-avatar {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
 }
 
 .userstatus-indicator {
@@ -112,10 +114,10 @@ html.dark .userstatus-label {
 }
 
 .userstatus-text {
-  color: #94a3b8;
+  color: #64748b;
   font-style: italic;
 }
 
 html.dark .userstatus-text {
-  color: #6b7280;
+  color: #94a3b8;
 }

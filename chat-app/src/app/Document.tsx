@@ -5,6 +5,21 @@ import stylesUrl from "./styles.css?url";
 // import qStyles from './question-table.css?url'
 // import qPageStyles from './questions-page.css?url'
 
+// Inline script to prevent flash of wrong theme
+const themeScript = `
+(function() {
+  const theme = localStorage.getItem('theme') || 'dark';
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const shouldBeDark = theme === 'dark' || (theme === 'system' && prefersDark);
+  if (shouldBeDark) {
+    document.documentElement.classList.add('dark');
+    document.documentElement.style.colorScheme = 'dark';
+  } else {
+    document.documentElement.style.colorScheme = 'light';
+  }
+})();
+`;
+
 export const Document: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => (
@@ -13,6 +28,7 @@ export const Document: React.FC<{ children: React.ReactNode }> = ({
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>@redwoodjs/starter-minimal</title>
+      <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       <link rel="stylesheet" href={stylesUrl} />
       {/* Andre CSS imports kan legges til her også!
           <link rel="stylesheet" href={qStyles} />

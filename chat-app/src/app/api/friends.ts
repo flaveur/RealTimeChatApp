@@ -16,9 +16,9 @@ export async function getFriends(request: Request, db: any) {
 
     const friendsList = await Promise.all(
       allFriendships.map(async (f: any) => {
-        // Drizzle kan returnere snake_case eller camelCase
-        const fUserId = f.userId ?? f.user_id;
-        const fFriendId = f.friendId ?? f.friend_id;
+        // Drizzle kan returnere snake_case eller camelCase, og tall som floats
+        const fUserId = Number(f.userId ?? f.user_id);
+        const fFriendId = Number(f.friendId ?? f.friend_id);
         const friendId = fUserId === auth.userId ? fFriendId : fUserId;
         
         // Filtrer ut seg selv
@@ -29,6 +29,7 @@ export async function getFriends(request: Request, db: any) {
           id: friendId,
           username: friendData?.username,
           displayName: friendData?.displayName,
+          avatarUrl: friendData?.avatarUrl,
           status: friendData?.status || "offline",
           createdAt: f.createdAt ?? f.created_at
         };
@@ -80,6 +81,7 @@ export async function getFriendRequests(request: Request, db: any) {
           id: senderId,
           username: sender?.username,
           displayName: sender?.displayName,
+          avatarUrl: sender?.avatarUrl,
         }
       };
     })
@@ -100,6 +102,7 @@ export async function getFriendRequests(request: Request, db: any) {
           id: receiverId,
           username: receiver?.username,
           displayName: receiver?.displayName,
+          avatarUrl: receiver?.avatarUrl,
         }
       };
     })
@@ -334,40 +337,54 @@ export async function removeFriend(request: Request, db: any, d1: D1Database) {
   return Response.json({ success: true });
 }
 
-// Søk etter brukere
+// Søk etter brukere (returnerer alle hvis ingen query, ellers filtrerer)
 export async function searchUsers(request: Request, db: any) {
   const auth = await authenticateUser(request, db);
   if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
   const url = new URL(request.url);
-  const query = url.searchParams.get("q");
-
-  if (!query || query.trim().length < 2) {
-    return Response.json({ error: "Søk må være minst 2 tegn" }, { status: 400 });
-  }
-
-  const searchPattern = `%${query.trim().toLowerCase()}%`;
+  const query = url.searchParams.get("q")?.trim() || "";
   
   try {
-    const results = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        displayName: users.displayName,
-        status: users.status,
-      })
-      .from(users)
-      .where(
-        or(
-          like(users.username, searchPattern),
-          like(users.displayName, searchPattern)
+    let results;
+    
+    if (query.length === 0) {
+      // Hent alle brukere
+      results = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          avatarUrl: users.avatarUrl,
+          status: users.status,
+        })
+        .from(users)
+        .limit(50)
+        .all();
+    } else {
+      // Filtrer basert på søk
+      const searchPattern = `%${query.toLowerCase()}%`;
+      results = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          displayName: users.displayName,
+          avatarUrl: users.avatarUrl,
+          status: users.status,
+        })
+        .from(users)
+        .where(
+          or(
+            like(users.username, searchPattern),
+            like(users.displayName, searchPattern)
+          )
         )
-      )
-      .limit(20)
-      .all();
+        .limit(50)
+        .all();
+    }
 
     // Filtrer bort seg selv
-    const filtered = results.filter((u: any) => u.id !== auth.userId);
+    const filtered = results.filter((u: any) => Number(u.id) !== auth.userId);
 
     return Response.json({ users: filtered });
   } catch (error) {

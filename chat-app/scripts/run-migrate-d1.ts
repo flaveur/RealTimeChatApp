@@ -45,7 +45,6 @@ for (const file of migrationFiles) {
     const error = err as Error;
     console.error(`❌ Migration failed: ${file}`, error.message || err);
     failCount++;
-    // Continue with next migration instead of exiting
   }
 }
 
@@ -60,3 +59,7 @@ if (failCount > 0) {
 } else {
   console.log('\n🎉 All migrations completed successfully!');
 }
+
+/*Migrasjons script for D1 database med Wrangler
+
+Hele scriptet er skrevet av GitHub Copilot. */

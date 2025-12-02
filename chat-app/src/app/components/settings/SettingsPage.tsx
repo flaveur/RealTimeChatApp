@@ -7,11 +7,28 @@ import { Button } from "../ui/Button";
 import { useEffect, useState, useSyncExternalStore, useRef } from "react";
 
 export default function SettingsPage() {
+  // Lokal state for form-felter
   const [statusText, setStatusText] = useState("");
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(null);
+  
+  /**
+   * useSyncExternalStore - React 18 hook for ekstern state
+   * 
+   * Denne hooken lar React komponenter "subscribe" til ekstern state
+   * (state som ikke administreres av React). Perfekt for tema som
+   * lagres i localStorage.
+   * 
+   * Parametere:
+   * 1. subscribe - funksjon som registrerer en callback
+   * 2. getTheme - funksjon som returnerer nåværende verdi
+   * 3. () => "system" - fallback for server-side rendering
+   */
   const theme = useSyncExternalStore(subscribe, getTheme, () => "system");
+  
+  // Ref for å nullstille file input etter opplasting
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Lydinnstilling lagres i localStorage (ikke server)
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Hent brukerdata ved oppstart
@@ -31,7 +48,7 @@ export default function SettingsPage() {
     fetchUser();
   }, []);
 
-  // Load from localStorage only on client
+  
   useEffect(() => {
     const saved = localStorage.getItem("notifications.sound");
     if (saved !== null) {
@@ -124,7 +141,7 @@ export default function SettingsPage() {
 
   return (
     <AppLayout title="Innstillinger">
-      <section className="space-y-4 md:space-y-6 pb-4 md:pb-6 overflow-y-auto h-full">
+      <section className="space-y-4 md:space-y-6 pb-4 md:pb-6 overflow-y-auto h-full hide-scrollbar">
 
         {/* PROFILBILDE */}
         <article className="rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 md:p-6 shadow-sm">
@@ -215,7 +232,7 @@ export default function SettingsPage() {
                 type="text"
                 value={statusText}
                 onChange={(e) => setStatusText(e.target.value)}
-                placeholder="F.eks. 'På jobb' eller 'Spiller spill 🎮'"
+                placeholder="Skriv din statustekst her..."
                 maxLength={100}
                 className="mt-1 w-full rounded-xl border border-gray-300 dark:border-gray-600 
                            bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-3
@@ -292,11 +309,13 @@ export default function SettingsPage() {
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{labels[t]}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{descriptions[t]}</p>
                   </div>
-                  {theme === t && (
-                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  )}
+                  <div className="w-5 h-5 flex-shrink-0">
+                    {theme === t && (
+                      <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
                 </label>
               );
             })}
@@ -386,7 +405,8 @@ function UserStatusEditable() {
     return unsub;
   }, []);
 
-  const handleStatusChange = (newStatus: "online" | "busy" | "away") => {
+  const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement>, newStatus: "online" | "busy" | "away") => {
+    e.preventDefault();
     rwsdk.auth.setStatus(newStatus);
   };
 
@@ -414,7 +434,7 @@ function UserStatusEditable() {
             name="status"
             value={value}
             checked={currentStatus === value}
-            onChange={() => handleStatusChange(value)}
+            onChange={(e) => handleStatusChange(e, value)}
             className="sr-only"
           />
           <span className={`h-4 w-4 rounded-full ${color} flex-shrink-0`} />
@@ -422,13 +442,36 @@ function UserStatusEditable() {
             <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
           </div>
-          {currentStatus === value && (
-            <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          )}
+          <div className="w-5 h-5 flex-shrink-0">
+            {currentStatus === value && (
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
         </label>
       ))}
     </div>
   );
 }
+
+
+/**
+ * SettingsPage - Innstillinger for bruker
+ * 
+ * Denne komponenten lar brukeren konfigurere:
+  - Profilbilde (opplasting til R2 bucket)
+  - Statustekst (personlig melding)
+  - Status (tilgjengelig/opptatt/borte)
+  - Tema (lyst/mørkt/system)
+  - Varsler (lydinnstillinger)
+   - Utlogging
+ 
+  Tekniske detaljer:
+  useSyncExternalStore for tema
+  FormData for filopplasting
+  rwsdk for global state management
+  localStorage for varslings-preferanser
+ 
+  Kode skrevet med hjelp fra AI (GitHub Copilot / Claude).
+ */

@@ -1,16 +1,35 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@theme {
-  --bg: #0f172a;
-  --card: #0b1220;
-  --muted: #94a3b8;
-  --accent: #60a5fa;
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Lys modus (standard) */
+:root {
+  --bg: #f8fafc;
+  --bg-secondary: #ffffff;
+  --card: #ffffff;
+  --card-hover: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  color-scheme: light;
 }
 
-:root {
-  color-scheme: light dark;
+/* Mørk modus */
+html.dark {
+  --bg: #0f172a;
+  --bg-secondary: #1e293b;
+  --card: #1e293b;
+  --card-hover: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+  color-scheme: dark;
 }
 
 html, body, #root {
@@ -20,8 +39,9 @@ html, body, #root {
 
 body {
   background-color: var(--bg);
-  color: white;
+  color: var(--text-primary);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .card {
@@ -31,5 +51,27 @@ body {
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--text-muted);
+}
+
+/* Safe area for iOS devices med notch */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bedre touch-opplevelse på mobil */
+@media (max-width: 768px) {
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Skjul scrollbar men behold scroll-funksjonalitet */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE og Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
 }

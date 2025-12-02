@@ -1,18 +1,53 @@
 "use client";
 
+/**
+ * FriendsClient - Klientside komponent for vennehåndtering
+ * 
+ * Denne komponenten håndterer all vennerelatert funksjonalitet:
+ * - Visning av eksisterende venner
+ * - Motta og sende venneforespørsler
+ * - Søke etter nye venner
+ * - Fjerne venner
+ * 
+ * Arkitektur:
+ * - Bruker tabs for å bytte mellom forskjellige visninger
+ * - Hvert tab-bytte trigger en ny API-forespørsel (useEffect)
+ * - Live filtrering av søkeresultater (klientside)
+ * 
+ * API-endepunkter brukt:
+ * - GET  /api/friends          → Hent venneliste
+ * - GET  /api/friends/requests → Hent venneforespørsler
+ * - GET  /api/friends/search   → Hent alle brukere (for søk)
+ * - POST /api/friends/request  → Send venneforespørsel
+ * - POST /api/friends/accept   → Godta forespørsel
+ * - POST /api/friends/reject   → Avslå forespørsel
+ * - DELETE /api/friends/remove → Fjern venn
+ * 
+ * Kode skrevet med assistanse fra AI (GitHub Copilot / Claude).
+ */
+
 import React, { useState, useEffect } from "react";
 import "./friends.css";
 
+// Mulige tabs i UI
 type Tab = "friends" | "requests" | "search";
 
+/**
+ * Interface for en venn i vennelisten
+ */
 interface Friend {
   id: string;
   username: string;
   displayName?: string;
   status: string;
+  avatarUrl?: string;
   createdAt: string;
 }
 
+/**
+ * Interface for en venneforespørsel
+ * ID er UUID fra databasen
+ */
 interface FriendRequest {
   id: string;  // ID er UUID i databasen
   type: "received" | "sent";
@@ -20,42 +55,74 @@ interface FriendRequest {
     id: string;
     username: string;
     displayName?: string;
+    avatarUrl?: string;
   };
   receiver?: {
     id: string;
     username: string;
     displayName?: string;
+    avatarUrl?: string;
   };
   status: string;
   createdAt: string;
 }
 
+/**
+ * Interface for søkeresultat
+ */
 interface SearchResult {
   id: string;
   username: string;
   displayName?: string;
   status: string;
+  avatarUrl?: string;
 }
 
 export default function FriendsClient() {
+  // Aktiv tab (friends/requests/search)
   const [activeTab, setActiveTab] = useState<Tab>("friends");
+  
+  // Data for hver tab
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<{ received: FriendRequest[]; sent: FriendRequest[] }>({
     received: [],
     sent: [],
   });
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  
+  // Søk og UI state
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Effect som henter data når aktiv tab endres
+   * Hver tab har sin egen fetch-funksjon
+   */
   useEffect(() => {
     if (activeTab === "friends") {
       fetchFriends();
     } else if (activeTab === "requests") {
       fetchRequests();
+    } else if (activeTab === "search") {
+      fetchAllUsers();
     }
   }, [activeTab]);
+
+  async function fetchAllUsers() {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch("/api/friends/search", { credentials: "same-origin" });
+      if (!res.ok) throw new Error("Kunne ikke hente brukere");
+      const data = await res.json() as { users: SearchResult[] };
+      setSearchResults(data.users || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function fetchFriends() {
     try {
@@ -63,7 +130,7 @@ export default function FriendsClient() {
       setError(null);
       const res = await fetch("/api/friends", { credentials: "same-origin" });
       if (!res.ok) throw new Error("Kunne ikke hente venner");
-      const data = await res.json();
+      const data = await res.json() as { friends: Friend[] };
       setFriends(data.friends || []);
     } catch (err: any) {
       setError(err.message);
@@ -78,7 +145,7 @@ export default function FriendsClient() {
       setError(null);
       const res = await fetch("/api/friends/requests", { credentials: "same-origin" });
       if (!res.ok) throw new Error("Kunne ikke hente venneforespørsler");
-      const data = await res.json();
+      const data = await res.json() as { received: FriendRequest[]; sent: FriendRequest[] };
       setRequests({
         received: data.received || [],
         sent: data.sent || [],
@@ -90,28 +157,15 @@ export default function FriendsClient() {
     }
   }
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      setError("Søk må være minst 2 tegn");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`/api/friends/search?q=${encodeURIComponent(searchQuery.trim())}`, {
-        credentials: "same-origin",
-      });
-      if (!res.ok) throw new Error("Søk feilet");
-      const data = await res.json();
-      setSearchResults(data.users || []);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Filtrer brukere basert på søketekst (live filtrering)
+  const filteredUsers = searchResults.filter((user) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      user.username.toLowerCase().includes(query) ||
+      (user.displayName?.toLowerCase().includes(query) ?? false)
+    );
+  });
 
   async function sendFriendRequest(username: string) {
     try {
@@ -123,13 +177,12 @@ export default function FriendsClient() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json() as { error?: string };
         throw new Error(data.error || "Kunne ikke sende venneforespørsel");
       }
 
       alert("Venneforespørsel sendt!");
-      setSearchResults([]);
-      setSearchQuery("");
+      fetchAllUsers(); // Oppdater listen
     } catch (err: any) {
       alert(err.message);
     }
@@ -267,9 +320,13 @@ export default function FriendsClient() {
                     <li key={friend.id} className="friend-item">
                       <div className="friend-info">
                         <figure className="friend-avatar" aria-hidden="true">
-                          <span className="friend-initials">
-                            {(friend.displayName || friend.username)?.[0]?.toUpperCase() || "?"}
-                          </span>
+                          {friend.avatarUrl ? (
+                            <img src={friend.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
+                          ) : (
+                            <span className="friend-initials">
+                              {(friend.displayName || friend.username)?.[0]?.toUpperCase() || "?"}
+                            </span>
+                          )}
                         </figure>
                         <div className="friend-details">
                           <h3 className="friend-name">
@@ -318,11 +375,15 @@ export default function FriendsClient() {
                       <li key={req.id} className="friend-item">
                         <div className="friend-info">
                           <figure className="friend-avatar" aria-hidden="true">
-                            <span className="friend-initials">
-                              {req.sender?.displayName?.[0]?.toUpperCase() ||
-                                req.sender?.username?.[0]?.toUpperCase() ||
-                                "?"}
-                            </span>
+                            {req.sender?.avatarUrl ? (
+                              <img src={req.sender.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                              <span className="friend-initials">
+                                {req.sender?.displayName?.[0]?.toUpperCase() ||
+                                  req.sender?.username?.[0]?.toUpperCase() ||
+                                  "?"}
+                              </span>
+                            )}
                           </figure>
                           <div className="friend-details">
                             <h3 className="friend-name">
@@ -366,11 +427,15 @@ export default function FriendsClient() {
                       <li key={req.id} className="friend-item">
                         <div className="friend-info">
                           <figure className="friend-avatar" aria-hidden="true">
-                            <span className="friend-initials">
-                              {req.receiver?.displayName?.[0]?.toUpperCase() ||
-                                req.receiver?.username?.[0]?.toUpperCase() ||
-                                "?"}
-                            </span>
+                            {req.receiver?.avatarUrl ? (
+                              <img src={req.receiver.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                              <span className="friend-initials">
+                                {req.receiver?.displayName?.[0]?.toUpperCase() ||
+                                  req.receiver?.username?.[0]?.toUpperCase() ||
+                                  "?"}
+                              </span>
+                            )}
                           </figure>
                           <div className="friend-details">
                             <h3 className="friend-name">
@@ -393,38 +458,35 @@ export default function FriendsClient() {
           {!loading && activeTab === "search" && (
             <section aria-label="Søk etter venner">
               <div className="friends-search-section">
-                <form onSubmit={handleSearch} className="friends-search-form">
+                <div className="friends-search-form">
                   <input
                     type="search"
-                    placeholder="Søk etter brukernavn eller e-post..."
+                    placeholder="Filtrer etter brukernavn..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="friends-search-input"
                     aria-label="Søk etter venner"
                   />
-                  <button
-                    type="submit"
-                    disabled={searchQuery.trim().length < 2}
-                    className="friends-search-btn"
-                  >
-                    Søk
-                  </button>
-                </form>
+                </div>
               </div>
 
-              {searchResults.length > 0 && (
+              {filteredUsers.length > 0 ? (
                 <div className="friends-results">
-                  <h2 className="friends-results-title">Søkeresultater</h2>
+                  <h2 className="friends-results-title">Brukere ({filteredUsers.length})</h2>
                   <ul className="friends-list">
-                    {searchResults.map((user) => (
+                    {filteredUsers.map((user) => (
                       <li key={user.id} className="friend-item">
                         <div className="friend-info">
                           <figure className="friend-avatar" aria-hidden="true">
-                            <span className="friend-initials">
-                              {user.displayName?.[0]?.toUpperCase() ||
-                                user.username?.[0]?.toUpperCase() ||
-                                "?"}
-                            </span>
+                            {user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                              <span className="friend-initials">
+                                {user.displayName?.[0]?.toUpperCase() ||
+                                  user.username?.[0]?.toUpperCase() ||
+                                  "?"}
+                              </span>
+                            )}
                           </figure>
                           <div className="friend-details">
                             <h3 className="friend-name">
@@ -447,6 +509,10 @@ export default function FriendsClient() {
                     ))}
                   </ul>
                 </div>
+              ) : (
+                <p className="friends-empty">
+                  {searchQuery.trim() ? "Ingen brukere matcher søket ditt" : "Ingen brukere funnet"}
+                </p>
               )}
             </section>
           )}

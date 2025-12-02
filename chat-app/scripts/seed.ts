@@ -47,3 +47,7 @@ if (process.env.D1_NAME || process.env.D1_DATABASE) {
     }
   }
 }
+
+/*Seed script for D1 database med Wrangler
+
+Hele scriptet er skrevet av GitHub Copilot. */

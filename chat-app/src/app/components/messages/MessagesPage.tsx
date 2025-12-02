@@ -35,9 +35,16 @@ export default function MessagesPageComponent() {
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showConversations, setShowConversations] = useState(true); // For mobil navigasjon
   const menuRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Lukk menyen når man klikker utenfor
+  //Scroller til bunnen når nye meldinger kommer
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  //lukker menyen når man klikker utenfor
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -57,6 +64,10 @@ export default function MessagesPageComponent() {
     if (activeId !== null) {
       loadConversation(activeId);
       markAsRead(activeId);
+      // På mobil, så skjuler samtale-listen når en samtale er valgt
+      if (window.innerWidth < 768) {
+        setShowConversations(false);
+      }
     }
   }, [activeId]);
 
@@ -155,6 +166,7 @@ export default function MessagesPageComponent() {
       setActiveId(null);
       setActiveFriend(null);
       setMessages([]);
+      setShowConversations(true);
       await loadConversations();
       alert("Venn fjernet");
     } catch (err: any) {
@@ -162,10 +174,8 @@ export default function MessagesPageComponent() {
     }
   }
 
-  function handleMuteNotifications() {
-    // TODO: Implementer muting av notifikasjoner når vi har støtte for det
-    alert("Notifikasjoner dempet for denne samtalen");
-    setMenuOpen(false);
+  function handleBackToConversations() {
+    setShowConversations(true);
   }
 
   const getInitials = (name?: string, username?: string) => {
@@ -189,27 +199,38 @@ export default function MessagesPageComponent() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-gray-950">
-        <p className="text-gray-400">Laster meldinger...</p>
+      <div className="flex h-full items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <p className="text-gray-600 dark:text-gray-400">Laster meldinger...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full bg-gray-950">
-      <div className="w-64 border-r border-gray-800 flex flex-col bg-gray-900/50">
-        <div className="px-4 py-3 border-b border-gray-800">
-          <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-widest">Samtaler</h2>
+    <div className="flex h-full bg-gray-50 dark:bg-gray-950 overflow-hidden">
+      {/* Samtale-liste - skjult på mobil når en samtale er aktiv */}
+      <div className={`
+        ${showConversations ? 'flex' : 'hidden'} 
+        md:flex
+        w-full md:w-64 
+        border-r border-gray-200 dark:border-gray-800 
+        flex-col 
+        bg-white dark:bg-gray-900/50
+        absolute md:relative
+        inset-0 md:inset-auto
+        z-10
+      `}>
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+          <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-widest">Samtaler</h2>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="p-4 text-center">
-              <p className="text-sm text-gray-400 mb-1">Ingen samtaler enda</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Ingen samtaler enda</p>
               <p className="text-xs text-gray-500">Legg til venner for å starte en chat</p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-800">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-800">
               {conversations.map((conv) => (
                 <li key={conv.friend.id}>
                   <button
@@ -217,7 +238,7 @@ export default function MessagesPageComponent() {
                     className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors relative ${
                       conv.friend.id === activeId
                         ? "bg-blue-600 text-white"
-                        : "text-gray-300 hover:bg-gray-800"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
                     <figure className="relative h-10 w-10 flex-shrink-0">
@@ -230,11 +251,11 @@ export default function MessagesPageComponent() {
                           </span>
                         )}
                       </div>
-                      <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${getStatusColor(conv.friend.status)}`} />
+                      <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${getStatusColor(conv.friend.status)}`} />
                     </figure>
                     <figcaption className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{getDisplayName(conv.friend)}</p>
-                      <p className="truncate text-xs text-gray-400">
+                      <p className={`truncate text-xs ${conv.friend.id === activeId ? "text-blue-100" : "text-gray-500 dark:text-gray-400"}`}>
                         {conv.lastMessage?.content || "Ingen meldinger"}
                       </p>
                     </figcaption>
@@ -251,10 +272,28 @@ export default function MessagesPageComponent() {
         </div>
       </div>
 
-      <main className="flex-1 flex flex-col overflow-hidden">
+      {/* Selve chatområde - Dette er implementert med en del hjelp av Github Copilot*/}
+      <main className={`
+        ${!showConversations ? 'flex' : 'hidden'} 
+        md:flex
+        flex-1 flex-col 
+        overflow-hidden
+        min-h-0
+      `}>
         {activeId !== null && activeFriend ? (
           <>
-            <header className="px-6 py-4 border-b border-gray-800 bg-gray-900 flex items-center gap-3 flex-shrink-0">
+            <header className="px-3 md:px-6 py-3 md:py-4 pt-4 md:pt-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center gap-3 flex-shrink-0">
+              {/* Tilbake-knapp for mobil */}
+              <button
+                onClick={handleBackToConversations}
+                className="md:hidden p-2 -ml-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+                aria-label="Tilbake til samtaler"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
               <figure className="relative h-10 w-10 flex-shrink-0">
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden flex items-center justify-center">
                   {activeFriend.avatarUrl ? (
@@ -265,18 +304,18 @@ export default function MessagesPageComponent() {
                     </span>
                   )}
                 </div>
-                <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${getStatusColor(activeFriend.status)}`} />
+                <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${getStatusColor(activeFriend.status)}`} />
               </figure>
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold text-white">{getDisplayName(activeFriend)}</h2>
-                <p className="text-xs text-gray-400 capitalize">{activeFriend.status}</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white truncate">{getDisplayName(activeFriend)}</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{activeFriend.status}</p>
               </div>
               
               {/* Dropdown meny */}
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white"
                   aria-label="Meny"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -287,20 +326,10 @@ export default function MessagesPageComponent() {
                 </button>
                 
                 {menuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
-                    <button
-                      onClick={handleMuteNotifications}
-                      className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                      </svg>
-                      Demp notifikasjoner
-                    </button>
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
                     <button
                       onClick={handleRemoveFriend}
-                      className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-4 py-3 text-sm text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
@@ -312,18 +341,19 @@ export default function MessagesPageComponent() {
               </div>
             </header>
 
-            <section className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <section className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-4 bg-gray-50 dark:bg-transparent min-h-0">
               {messages.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-8">Ingen meldinger ennå. Start samtalen!</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Ingen meldinger ennå. Start samtalen!</p>
               ) : (
                 messages.map((m) => (
                   <MessageBubble key={m.id} message={m} selfId={me?.id} friend={activeFriend} />
                 ))
               )}
+              <div ref={messagesEndRef} />
             </section>
 
-            <footer className="border-t border-gray-800 bg-gray-900 p-4 flex-shrink-0">
-              <form onSubmit={sendMessage} className="flex items-end gap-3">
+            <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 md:p-4 flex-shrink-0">
+              <form onSubmit={sendMessage} className="flex items-end gap-2 md:gap-3">
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
@@ -335,12 +365,12 @@ export default function MessagesPageComponent() {
                   }}
                   placeholder="Skriv en melding..."
                   rows={1}
-                  className="flex-1 resize-none rounded-lg border border-gray-700 bg-gray-800 text-white px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder-gray-500"
+                  className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white px-3 md:px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm placeholder-gray-500"
                 />
                 <button
                   type="submit"
                   disabled={!text.trim()}
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50 transition text-sm"
+                  className="px-3 md:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50 transition text-sm flex-shrink-0"
                 >
                   Send
                 </button>
@@ -348,9 +378,9 @@ export default function MessagesPageComponent() {
             </footer>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="text-center p-4">
+              <svg className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               <p className="text-sm">Velg en samtale for å starte</p>
@@ -379,13 +409,13 @@ function MessageBubble({ message, selfId, friend }: { message: Message; selfId: 
         </figure>
       )}
 
-      <section className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm leading-relaxed ${mine ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-100"}`}>
+      <section className={`max-w-[70%] px-3 md:px-4 py-2 rounded-2xl text-sm leading-relaxed ${mine ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"}`}>
         {!mine && (
           <p className="text-xs font-semibold mb-1 opacity-70">
             {friend.displayName || friend.username}
           </p>
         )}
-        <p>{message.content}</p>
+        <p className="break-words">{message.content}</p>
         <time dateTime={message.createdAt} className="block text-xs opacity-70 mt-1">
           {new Date(message.createdAt).toLocaleTimeString("no-NO", { hour: '2-digit', minute: '2-digit' })}
         </time>
