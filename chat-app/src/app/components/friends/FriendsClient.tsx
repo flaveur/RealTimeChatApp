@@ -14,7 +14,7 @@ interface Friend {
 }
 
 interface FriendRequest {
-  id: string;
+  id: string;  // ID er UUID i databasen
   type: "received" | "sent";
   sender?: {
     id: string;
@@ -137,6 +137,7 @@ export default function FriendsClient() {
 
   async function acceptRequest(requestId: string) {
     try {
+      console.log("Sending accept request for id:", requestId);
       const res = await fetch("/api/friends/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -144,11 +145,16 @@ export default function FriendsClient() {
         credentials: "same-origin",
       });
 
-      if (!res.ok) throw new Error("Kunne ikke akseptere forespørsel");
+      const data = await res.json() as { success?: boolean; error?: string };
+      console.log("Accept response:", data);
+
+      if (!res.ok) {
+        throw new Error(data.error || "Kunne ikke akseptere forespørsel");
+      }
       
       alert("Venneforespørsel akseptert!");
       fetchRequests();
-      if (activeTab === "friends") fetchFriends();
+      fetchFriends();
     } catch (err: any) {
       alert(err.message);
     }
@@ -156,6 +162,7 @@ export default function FriendsClient() {
 
   async function rejectRequest(requestId: string) {
     try {
+      console.log("Sending reject request for id:", requestId);
       const res = await fetch("/api/friends/reject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -163,7 +170,12 @@ export default function FriendsClient() {
         credentials: "same-origin",
       });
 
-      if (!res.ok) throw new Error("Kunne ikke avslå forespørsel");
+      const data = await res.json() as { success?: boolean; error?: string };
+      console.log("Reject response:", data);
+
+      if (!res.ok) {
+        throw new Error(data.error || "Kunne ikke avslå forespørsel");
+      }
       
       alert("Venneforespørsel avslått");
       fetchRequests();

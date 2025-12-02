@@ -20,7 +20,7 @@ export async function getFriends(request: Request, db: any) {
         const friendData = await getUserData(db, friendId);
         return { 
           id: friendId,
-          username: friendData?.username || friendData?.email,
+          username: friendData?.username,
           displayName: friendData?.displayName,
           status: friendData?.status || "offline",
           createdAt: f.createdAt
@@ -164,8 +164,10 @@ export async function sendFriendRequest(request: Request, db: any) {
     return Response.json({ error: "Venneforespørsel eksisterer allerede" }, { status: 409 });
   }
 
-  // Opprett venneforespørsel (id blir auto-generert av databasen)
+  // Opprett venneforespørsel med UUID
+  const requestId = crypto.randomUUID();
   const result = await db.insert(friendRequests).values({
+    id: requestId,
     senderId: auth.userId,
     receiverId: friendId,
     status: "pending",
@@ -180,116 +182,145 @@ export async function sendFriendRequest(request: Request, db: any) {
 }
 
 // Aksepter venneforespørsel
-export async function acceptFriendRequest(request: Request, db: any) {
+export async function acceptFriendRequest(request: Request, db: any, d1: D1Database) {
   try {
-  const auth = await authenticateUser(request, db);
-  if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+    const auth = await authenticateUser(request, db);
+    if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
-  const { requestId } = (await request.json()) as { requestId: number };
-  if (!requestId) return Response.json({ error: "Mangler requestId" }, { status: 400 });
-
-  const existingRequest = await db
-    .select()
-    .from(friendRequests)
-    .where(eq(friendRequests.id, requestId))
-    .all();
-
-  if (!existingRequest || existingRequest.length === 0) {
-    return Response.json({ error: "Forespørsel ikke funnet" }, { status: 404 });
-  }
-
-  const req = existingRequest[0] as any;
-
-  if (req.receiver_id !== auth.userId && req.receiverId !== auth.userId) {
-    return Response.json({ error: "Ikke autorisert" }, { status: 403 });
-  }
-
-  if (req.status !== "pending") {
-    return Response.json({ error: "Forespørselen er allerede behandlet" }, { status: 400 });
-  }
-
-  // Oppdater forespørsel til akseptert
-  await db
-    .update(friendRequests)
-    .set({ status: "accepted", updatedAt: new Date().toISOString() })
-    .where(eq(friendRequests.id, requestId));
-
-  // Opprett vennskap i BEGGE retninger
-  await db.insert(friendships).values([
-    {
-      userId: req.sender_id ?? req.senderId,
-      friendId: req.receiver_id ?? req.receiverId,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      userId: req.receiver_id ?? req.receiverId,
-      friendId: req.sender_id ?? req.senderId,
-      createdAt: new Date().toISOString(),
+    let body: any;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return Response.json({ error: "Ugyldig JSON i request body" }, { status: 400 });
     }
-  ]);
+    
+    const requestId = body.requestId;
+    if (!requestId) {
+      return Response.json({ error: "Mangler requestId i request body" }, { status: 400 });
+    }
 
-  return Response.json({ success: true });
+    console.log("Looking for friend request with id:", requestId);
+
+    // Bruk D1 direkte for raw SQL med UUID
+    const existingRequest = await d1.prepare(
+      `SELECT * FROM friend_requests WHERE id = ?`
+    ).bind(requestId).all();
+
+    console.log("Found requests:", JSON.stringify(existingRequest));
+
+    if (!existingRequest?.results || existingRequest.results.length === 0) {
+      return Response.json({ error: "Forespørsel ikke funnet" }, { status: 404 });
+    }
+
+    const req = existingRequest.results[0] as any;
+    
+    // Hent receiver_id og sender_id
+    const receiverId = req.receiver_id;
+    const senderId = req.sender_id;
+    
+    console.log("Request details - receiverId:", receiverId, "senderId:", senderId, "auth.userId:", auth.userId);
+
+    if (Number(receiverId) !== auth.userId) {
+      return Response.json({ error: "Ikke autorisert - du kan bare akseptere forespørsler sendt til deg" }, { status: 403 });
+    }
+
+    if (req.status !== "pending") {
+      return Response.json({ error: "Forespørselen er allerede behandlet" }, { status: 400 });
+    }
+
+    // Oppdater forespørsel til akseptert
+    await d1.prepare(
+      `UPDATE friend_requests SET status = 'accepted', updated_at = ? WHERE id = ?`
+    ).bind(new Date().toISOString(), requestId).run();
+
+    // Opprett vennskap i BEGGE retninger
+    const now = new Date().toISOString();
+    await d1.prepare(
+      `INSERT INTO friendships (user_id, friend_id, created_at) VALUES (?, ?, ?)`
+    ).bind(senderId, receiverId, now).run();
+    
+    await d1.prepare(
+      `INSERT INTO friendships (user_id, friend_id, created_at) VALUES (?, ?, ?)`
+    ).bind(receiverId, senderId, now).run();
+
+    console.log("Friendship created between", senderId, "and", receiverId);
+
+    return Response.json({ success: true });
   } catch (error) {
     console.error("Feil ved godkjenning av venneforespørsel:", error);
-    return Response.json({ error: "Kunne ikke godkjenne venneforespørsel" }, { status: 500 });
+    return Response.json({ error: "Kunne ikke godkjenne venneforespørsel: " + String(error) }, { status: 500 });
   }
 }
 
-// Avslå venneforespørsel
-export async function rejectFriendRequest(request: Request, db: any) {
+// Avslå venneforespørsel - sletter forespørselen helt
+export async function rejectFriendRequest(request: Request, db: any, d1: D1Database) {
   try {
-  const auth = await authenticateUser(request, db);
-  if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
+    const auth = await authenticateUser(request, db);
+    if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
-  const { requestId } = (await request.json()) as { requestId: number };
-  if (!requestId) return Response.json({ error: "Mangler requestId" }, { status: 400 });
+    let body: any;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return Response.json({ error: "Ugyldig JSON i request body" }, { status: 400 });
+    }
+    
+    console.log("Reject request body:", JSON.stringify(body));
+    
+    const requestId = body.requestId;
+    if (!requestId) {
+      return Response.json({ error: "Mangler requestId i request body" }, { status: 400 });
+    }
 
-  const existingRequest = await db
-    .select()
-    .from(friendRequests)
-    .where(eq(friendRequests.id, requestId))
-    .all();
+    // Bruk D1 direkte for raw SQL med UUID
+    const existingRequest = await d1.prepare(
+      `SELECT * FROM friend_requests WHERE id = ?`
+    ).bind(requestId).all();
 
-  if (!existingRequest || existingRequest.length === 0) {
-    return Response.json({ error: "Forespørsel ikke funnet" }, { status: 404 });
-  }
+    if (!existingRequest?.results || existingRequest.results.length === 0) {
+      return Response.json({ error: "Forespørsel ikke funnet" }, { status: 404 });
+    }
 
-  const req = existingRequest[0] as any;
+    const req = existingRequest.results[0] as any;
+    
+    // Hent receiver_id
+    const receiverId = req.receiver_id;
 
-  if (req.receiver_id !== auth.userId && req.receiverId !== auth.userId) {
-    return Response.json({ error: "Ikke autorisert" }, { status: 403 });
-  }
+    if (Number(receiverId) !== auth.userId) {
+      return Response.json({ error: "Ikke autorisert - du kan bare avslå forespørsler sendt til deg" }, { status: 403 });
+    }
 
-  // Oppdater forespørsel til avslått
-  await db
-    .update(friendRequests)
-    .set({ status: "rejected", updatedAt: new Date().toISOString() })
-    .where(eq(friendRequests.id, requestId));
+    // Slett forespørselen helt
+    await d1.prepare(
+      `DELETE FROM friend_requests WHERE id = ?`
+    ).bind(requestId).run();
 
-  return Response.json({ success: true });
+    console.log("Friend request", requestId, "deleted");
+
+    return Response.json({ success: true });
   } catch (error) {
     console.error("Feil ved avslåing av venneforespørsel:", error);
-    return Response.json({ error: "Kunne ikke avslå venneforespørsel" }, { status: 500 });
+    return Response.json({ error: "Kunne ikke avslå venneforespørsel: " + String(error) }, { status: 500 });
   }
 }
 
 // Fjern venn
-export async function removeFriend(request: Request, db: any) {
+export async function removeFriend(request: Request, db: any, d1: D1Database) {
   const auth = await authenticateUser(request, db);
   if (!auth) return Response.json({ error: "Ikke autentisert" }, { status: 401 });
 
   const { friendId } = (await request.json()) as { friendId: string };
   if (!friendId) return Response.json({ error: "Mangler friendId" }, { status: 400 });
 
-  // Fjern vennskapet (sjekk begge retninger)
-  await db
-    .delete(friendships)
-    .where(
-      or(
-        and(eq(friendships.userId, auth.userId), eq(friendships.friendId, friendId)),
-        and(eq(friendships.userId, friendId), eq(friendships.friendId, auth.userId))
-      )
-    );
+  const friendIdNum = parseInt(friendId, 10);
+  if (isNaN(friendIdNum)) {
+    return Response.json({ error: "Ugyldig friendId" }, { status: 400 });
+  }
+
+  // Fjern vennskapet (sjekk begge retninger) med D1 direkte
+  await d1.prepare(
+    `DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)`
+  ).bind(auth.userId, friendIdNum, friendIdNum, auth.userId).run();
 
   return Response.json({ success: true });
 }

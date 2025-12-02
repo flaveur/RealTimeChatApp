@@ -50,7 +50,7 @@ export const friendships = sqliteTable('friendships', {
    FRIEND REQUESTS TABLE
    ================================ */
 export const friendRequests = sqliteTable('friend_requests', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id').primaryKey(),  // UUID som text
   senderId: integer('sender_id').notNull().references(() => users.id),
   receiverId: integer('receiver_id').notNull().references(() => users.id),
   status: text('status').notNull().default('pending'), // "pending", "accepted", "rejected"

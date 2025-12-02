@@ -6,6 +6,7 @@ export async function friendsController(context: any): Promise<Response> {
   const request = context.request;
   const env = getEnv();
   const db = getDb(env.chat_appd1);
+  const d1 = env.chat_appd1; // Raw D1 database for raw queries
   
   const url = new URL(request.url);
   const pathname = url.pathname;
@@ -32,17 +33,17 @@ export async function friendsController(context: any): Promise<Response> {
 
   // POST /api/friends/accept - aksepter venneforespørsel
   if (request.method === "POST" && pathname === "/api/friends/accept") {
-    return acceptFriendRequest(request, db);
+    return acceptFriendRequest(request, db, d1);
   }
 
   // POST /api/friends/reject - avslå venneforespørsel
   if (request.method === "POST" && pathname === "/api/friends/reject") {
-    return rejectFriendRequest(request, db);
+    return rejectFriendRequest(request, db, d1);
   }
 
   // DELETE /api/friends/remove - fjern venn
   if (request.method === "DELETE" && pathname === "/api/friends/remove") {
-    return removeFriend(request, db);
+    return removeFriend(request, db, d1);
   }
 
   return Response.json({ error: "Not found" }, { status: 404 });
