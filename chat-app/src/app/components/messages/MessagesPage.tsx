@@ -1,5 +1,6 @@
 "use client";
 
+import AppLayout from "@/app/components/ui/AppLayout";
 import { Button } from "@/app/components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 import "./messages.css";
@@ -71,134 +72,57 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="min-h-screen flex">
-      <aside className="hidden md:block w-72 p-4 border-r">
-        <Sidebar />
-      </aside>
+    <AppLayout title="Meldinger">
+      <section className="messages-root">
+        <aside className={`${activeId && threads.length > 0 ? 'hidden md:block' : 'block'} messages-sidebar`}>
+          <header className="messages-sidebar-header">
+            <h2 className="messages-sidebar-title">Samtaler</h2>
+          </header>
+          <ul className="messages-thread-list">
+            {threads.map((t) => (
+              <li key={t.id}>
+                <button onClick={() => setActiveId(t.id)} className={`messages-thread-item ${t.id === activeId ? 'active' : ''}`}>
+                  <figure className="messages-thread-avatar">
+                    {t.avatarUrl ? <img src={t.avatarUrl} alt="" className="object-cover" /> : <span className="messages-initials">{t.title[0]?.toUpperCase() || "?"}</span>}
+                  </figure>
+                  <figcaption className="messages-thread-meta">
+                    <p className="truncate font-medium">{t.title}</p>
+                    <p className="truncate text-xs text-muted">{t.lastMessage ?? "Ingen meldinger"}</p>
+                  </figcaption>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
 
-      <main className="flex-1 p-6">
-        <section className="messages-root">
-          <aside
-            className={`${
-              activeId && threads.length > 0 ? "hidden md:block" : "block"
-            } messages-sidebar`}
-          >
-            <header className="messages-sidebar-header">
-              <h2 className="messages-sidebar-title">Samtaler</h2>
-            </header>
-            <ul className="messages-thread-list">
-              {threads.map((t) => (
-                <li key={t.id}>
-                  <button
-                    onClick={() => setActiveId(t.id)}
-                    className={`messages-thread-item ${
-                      t.id === activeId ? "active" : ""
-                    }`}
-                  >
-                    <figure className="messages-thread-avatar">
-                      {t.avatarUrl ? (
-                        <img
-                          src={t.avatarUrl}
-                          alt=""
-                          className="object-cover"
-                        />
-                      ) : (
-                        <span className="messages-initials">
-                          {t.title[0]?.toUpperCase() || "?"}
-                        </span>
-                      )}
-                    </figure>
-                    <figcaption className="messages-thread-meta">
-                      <p className="truncate font-medium">{t.title}</p>
-                      <p className="truncate text-xs text-muted">
-                        {t.lastMessage ?? "Ingen meldinger"}
-                      </p>
-                    </figcaption>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </aside>
+        <article className={`${!activeId && threads.length > 0 ? 'hidden md:flex' : 'flex'} messages-article`}>
+          {activeId ? (
+            <>
+              <header className="messages-article-header">
+                <button onClick={() => setActiveId(null)} className="md:hidden p-2" aria-label="Tilbake til samtaler">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <h2 className="text-base md:text-lg font-semibold">{activeTitle || "Samtale"}</h2>
+              </header>
 
-          <article
-            className={`${
-              !activeId && threads.length > 0 ? "hidden md:flex" : "flex"
-            } messages-article`}
-          >
-            {activeId ? (
-              <>
-                <header className="messages-article-header">
-                  <button
-                    onClick={() => setActiveId(null)}
-                    className="md:hidden p-2"
-                    aria-label="Tilbake til samtaler"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                  </button>
-                  <h2 className="text-base md:text-lg font-semibold">
-                    {activeTitle || "Samtale"}
-                  </h2>
-                </header>
+              <section aria-live="polite" className="messages-list">
+                {messages.length === 0 ? <p className="text-muted text-sm">Ingen meldinger ennå.</p> : messages.map((m) => <MessageBubble key={m.id} message={m} selfId={me?.id ?? ""} />)}
+              </section>
 
-                <section aria-live="polite" className="messages-list">
-                  {messages.length === 0 ? (
-                    <p className="text-muted text-sm">Ingen meldinger ennå.</p>
-                  ) : (
-                    messages.map((m) => (
-                      <MessageBubble
-                        key={m.id}
-                        message={m}
-                        selfId={"1"} // Replace with actual user ID if available
-                      />
-                    ))
-                  )}
-                </section>
-
-                <footer className="messages-footer">
-                  <form
-                    onSubmit={sendMessage}
-                    className="flex items-end gap-2 md:gap-3 w-full"
-                  >
-                    <label htmlFor="message" className="sr-only">
-                      Melding
-                    </label>
-                    <textarea
-                      id="message"
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
-                      placeholder="Skriv en melding..."
-                      rows={1}
-                      className="messages-input"
-                    />
-                    <Button type="submit" disabled={!text.trim()}>
-                      Send
-                    </Button>
-                  </form>
-                </footer>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-muted">
-                <p className="text-sm md:text-base">
-                  Velg en samtale for å starte
-                </p>
-              </div>
-            )}
-          </article>
-        </section>
-      </main>
-    </div>
+              <footer className="messages-footer">
+                <form onSubmit={sendMessage} className="flex items-end gap-2 md:gap-3 w-full">
+                  <label htmlFor="message" className="sr-only">Melding</label>
+                  <textarea id="message" value={text} onChange={(e) => setText(e.target.value)} placeholder="Skriv en melding..." rows={1} className="messages-input" />
+                  <Button type="submit" disabled={!text.trim()}>Send</Button>
+                </form>
+              </footer>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-muted"><p className="text-sm md:text-base">Velg en samtale for å starte</p></div>
+          )}
+        </article>
+      </section>
+    </AppLayout>
   );
 }
 

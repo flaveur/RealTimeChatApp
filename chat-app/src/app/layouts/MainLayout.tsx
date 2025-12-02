@@ -16,9 +16,6 @@ export async function MainLayout({ children, requestInfo }: LayoutProps) {
   return (
     <>
       {/* <AuthProvider initialUser={user}> */}
-      <header className="bg-white shadow-sm border-b">
-        <Navigation user={user} />
-      </header>
       <div>
         <main>{children}</main>
       </div>
