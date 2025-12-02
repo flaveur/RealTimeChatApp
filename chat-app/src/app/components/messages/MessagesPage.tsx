@@ -220,14 +220,16 @@ export default function MessagesPageComponent() {
                         : "text-gray-300 hover:bg-gray-800"
                     }`}
                   >
-                    <figure className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex-shrink-0 overflow-hidden flex items-center justify-center relative">
-                      {conv.friend.avatarUrl ? (
-                        <img src={conv.friend.avatarUrl} alt="" className="object-cover w-full h-full" />
-                      ) : (
-                        <span className="text-white font-bold text-sm">
-                          {getInitials(conv.friend.displayName, conv.friend.username)}
-                        </span>
-                      )}
+                    <figure className="relative h-10 w-10 flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden flex items-center justify-center">
+                        {conv.friend.avatarUrl ? (
+                          <img src={conv.friend.avatarUrl} alt="" className="object-cover w-full h-full" />
+                        ) : (
+                          <span className="text-white font-bold text-sm">
+                            {getInitials(conv.friend.displayName, conv.friend.username)}
+                          </span>
+                        )}
+                      </div>
                       <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${getStatusColor(conv.friend.status)}`} />
                     </figure>
                     <figcaption className="min-w-0 flex-1">
@@ -253,14 +255,16 @@ export default function MessagesPageComponent() {
         {activeId !== null && activeFriend ? (
           <>
             <header className="px-6 py-4 border-b border-gray-800 bg-gray-900 flex items-center gap-3 flex-shrink-0">
-              <figure className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex-shrink-0 overflow-hidden flex items-center justify-center relative">
-                {activeFriend.avatarUrl ? (
-                  <img src={activeFriend.avatarUrl} alt="" className="object-cover w-full h-full" />
-                ) : (
-                  <span className="text-white font-bold text-sm">
-                    {getInitials(activeFriend.displayName, activeFriend.username)}
-                  </span>
-                )}
+              <figure className="relative h-10 w-10 flex-shrink-0">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden flex items-center justify-center">
+                  {activeFriend.avatarUrl ? (
+                    <img src={activeFriend.avatarUrl} alt="" className="object-cover w-full h-full" />
+                  ) : (
+                    <span className="text-white font-bold text-sm">
+                      {getInitials(activeFriend.displayName, activeFriend.username)}
+                    </span>
+                  )}
+                </div>
                 <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-900 ${getStatusColor(activeFriend.status)}`} />
               </figure>
               <div className="flex-1">
