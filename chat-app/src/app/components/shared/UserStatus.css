@@ -32,7 +32,7 @@ html.dark .userstatus-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .userstatus-avatar-img {
