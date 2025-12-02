@@ -14,6 +14,7 @@ import Register from "@/app/pages/Register";
 import Messages from "@/app/pages/Messages";
 import Friends from "@/app/pages/Friends";
 import Settings from "./app/pages/Settings";
+import Sidebar from "./app/components/Sidebar";
 
 export type AppContext = {};
 
@@ -40,6 +41,7 @@ export default {
         layout(MainLayout, [
           route("/messages", Messages),
           route("/friends", Friends),
+          route("/sidebar", Sidebar),
         ]),
       ]),
       render(RealtimeDocument, [

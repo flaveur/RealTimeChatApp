@@ -1,8 +1,9 @@
-import "@/app/styles.css";
-import FriendsClient from "@/app/components/friends/FriendsClient";
-import Sidebar from "@/app/components/Sidebar/Sidebar";
+'use client';
 
-export default function Friends() {
+import "@/app/styles.css";
+import NotesPage from "@/app/components/notes/NotesPage";
+
+export default function Notes() {
   return (
     <div className="min-h-screen flex bg-gray-100 dark:bg-gray-900">
       <aside className="w-72 p-4 border-r bg-white dark:bg-gray-800">
@@ -14,9 +15,9 @@ export default function Friends() {
 
       <main className="flex-1 p-6">
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Venneliste</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Mine notater</h1>
         </header>
-        <FriendsClient />
+        <NotesPage />
       </main>
     </div>
   );

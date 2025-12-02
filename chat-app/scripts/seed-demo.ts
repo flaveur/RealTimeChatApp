@@ -6,7 +6,6 @@ import bcrypt from 'bcryptjs';
 
 const __dirname = path.resolve();
 const dbName = process.env.D1_NAME || process.env.D1_DATABASE || 'chat-appd1';
-const outFile = path.resolve(__dirname, 'drizzle/seed_demo.sql');
 
 async function run(): Promise<void> {
   const password = 'password';
@@ -23,13 +22,13 @@ INSERT INTO messages (user_id, body, created_at) VALUES (1, 'Welcome to the demo
 INSERT INTO messages (user_id, body, created_at) VALUES (1, 'This message was seeded', datetime('now'));
 `;
 
-  fs.writeFileSync(outFile, sql, 'utf8');
+  fs.writeFileSync(path.resolve(__dirname, 'drizzle/seed_demo.sql'), sql, 'utf8');
 
-  console.log(`Wrote seed SQL to ${outFile}`);
+  console.log(`Wrote seed SQL to ${path.resolve(__dirname, 'drizzle/seed_demo.sql')}`);
   
   try {
     console.log(`Executing seed SQL against D1 database '${dbName}' using wrangler d1 execute`);
-    execSync(`npx wrangler d1 execute ${dbName} --file "${outFile}"`, { stdio: 'inherit' });
+    execSync(`npx wrangler d1 execute ${dbName} --file "${path.resolve(__dirname, 'drizzle/seed_demo.sql')}"`, { stdio: 'inherit' });
     console.log('Seed executed successfully. Demo user password:', password);
   } catch (err) {
     const error = err as Error;
